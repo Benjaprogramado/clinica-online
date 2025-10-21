@@ -1,1 +1,104 @@
-<p>login works!</p>
+<div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="icono100.png" class="logo">
+        <h2>Bienvenido</h2>
+        <p>Ingresa tus credenciales para continuar</p>
+      </div>
+  
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('email')"
+            placeholder="usuario@ejemplo.com">
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('email')">
+            <span *ngIf="loginForm.get('email')?.errors?.['required']">
+              El email es obligatorio
+            </span>
+            <span *ngIf="loginForm.get('email')?.errors?.['email']">
+              Formato de email inválido
+            </span>
+          </div>
+        </div>
+  
+        <!-- Password -->
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <div class="password-input">
+            <input
+              [type]="mostrarPassword() ? 'text' : 'password'"
+              id="password"
+              formControlName="password"
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('password')"
+              placeholder="••••••••">
+            <button
+              type="button"
+              class="btn-toggle-password"
+              (click)="togglePassword()">
+              <i [class]="mostrarPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('password')">
+            <span *ngIf="loginForm.get('password')?.errors?.['required']">
+              La contraseña es obligatoria
+            </span>
+            <span *ngIf="loginForm.get('password')?.errors?.['minlength']">
+              Mínimo 6 caracteres
+            </span>
+          </div>
+        </div>
+  
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="btn btn-primary btn-block btn-login"
+          [disabled]="loginForm.invalid || cargando()">
+          <span *ngIf="!cargando()">Iniciar Sesión</span>
+          <span *ngIf="cargando()">Ingresando...</span>
+        </button>
+      </form>
+  
+      <!-- Accesos Rápidos -->
+      <div class="accesos-rapidos">
+        <p class="accesos-title">Accesos Rápidos (Testing)</p>
+        <div class="accesos-grid">
+          <button
+            type="button"
+            class="btn btn-outline-info btn-sm"
+            (click)="loginRapido('paciente')"
+            [disabled]="cargando()">
+            Paciente
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-warning btn-sm"
+            (click)="loginRapido('especialista')"
+            [disabled]="cargando()">
+            Especialista
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-danger btn-sm"
+            (click)="loginRapido('admin')"
+            [disabled]="cargando()">
+            Admin
+          </button>
+        </div>
+      </div>
+  
+      <!-- Links -->
+      <div class="login-footer">
+        <p>¿No tienes cuenta? 
+          <a routerLink="/registro" class="link">Regístrate aquí</a>
+        </p>
+        <a routerLink="/" class="link">Volver al inicio</a>
+      </div>
+    </div>
+  </div>

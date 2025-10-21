@@ -1,1 +1,74 @@
-<p>landing works!</p>
+<div class="landing-container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="logo-container">
+          <img src="icono100.png" alt="Clínica Online" class="logo">
+        </div>
+        
+        <h1 class="hero-title">Clínica Online</h1>
+        <p class="hero-subtitle">Tu salud, nuestra prioridad</p>
+        
+        <div class="hero-description">
+          <p>Sistema integral de gestión médica</p>
+          <p>Turnos online · Historia clínica digital · Atención profesional</p>
+        </div>
+  
+        <div class="cta-buttons">
+          <button class="btn btn-primary btn-lg" routerLink="/login">
+            Iniciar Sesión
+          </button>
+          
+          <button class="btn btn-outline-light btn-lg" routerLink="/registro">
+            Registrarse
+          </button>
+        </div>
+      </div>
+    </section>
+  
+    <!-- Features Section -->
+    <section class="features-section">
+      <div class="container">
+        <h2 class="section-title">Nuestros Servicios</h2>
+        
+        <div class="features-grid">
+          <div class="feature-card" *ngFor="let feature of features">
+            <div class="feature-icon">
+              <i [class]="feature.icon"></i>
+            </div>
+            <h3>{{ feature.titulo }}</h3>
+            <p>{{ feature.descripcion }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  
+    <!-- Info Section -->
+    <section class="info-section">
+      <div class="container">
+        <h2 class="section-title">Información</h2>
+        <div class="info-grid">
+          <div class="info-card">
+            <i class="pi pi-clock"></i>
+            <h3>Horarios de Atención</h3>
+            <p><strong>Lunes a Viernes:</strong> 8:00 - 19:00</p>
+            <p><strong>Sábados:</strong> 8:00 - 14:00</p>
+          </div>
+          
+          <div class="info-card">
+            <i class="pi pi-building"></i>
+            <h3>Instalaciones</h3>
+            <p>6 consultorios médicos</p>
+            <p>2 laboratorios físicos</p>
+          </div>
+          
+          <div class="info-card">
+            <i class="pi pi-users"></i>
+            <h3>Profesionales</h3>
+            <p>Especialistas de múltiples áreas</p>
+            <p>Atención personalizada</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
