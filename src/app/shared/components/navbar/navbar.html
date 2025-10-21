@@ -1,12 +1,75 @@
 <nav class="navbar">
   <div class="navbar-container">
+    <!-- Logo -->
     <a routerLink="/" class="navbar-brand">
+      <img src="logo.png" alt="Logo" class="navbar-logo">
       <span>Clínica Online</span>
     </a>
 
-    <div class="navbar-menu">
-      <a routerLink="/login" class="nav-link">Iniciar Sesión</a>
-      <a routerLink="/registro" class="nav-link">Registrarse</a>
+    <!-- Menu Toggle (Mobile) -->
+    <button class="menu-toggle" (click)="toggleMenu()">
+      <i [class]="menuAbierto ? 'pi pi-times' : 'pi pi-bars'"></i>
+    </button>
+
+    <!-- Menu -->
+    <div class="navbar-menu" [class.active]="menuAbierto">
+      
+      <!-- Usuario NO autenticado -->
+      <ng-container *ngIf="!(authService.user$ | async)">
+        <a routerLink="/login" class="nav-link" (click)="menuAbierto = false">
+          Iniciar Sesión
+        </a>
+        <a routerLink="/registro" class="nav-link" (click)="menuAbierto = false">
+          Registrarse
+        </a>
+      </ng-container>
+
+      <!-- Usuario Paciente -->
+      <ng-container *ngIf="(authService.user$ | async) as user">
+        <ng-container *ngIf="user.role === 'paciente'">
+          <a routerLink="/paciente/mis-turnos" class="nav-link" (click)="menuAbierto = false">
+            Mis Turnos
+          </a>
+          <a routerLink="/paciente/solicitar-turno" class="nav-link" (click)="menuAbierto = false">
+            Solicitar Turno
+          </a>
+          <a routerLink="/paciente/mi-perfil" class="nav-link" (click)="menuAbierto = false">
+            Mi Perfil
+          </a>
+        </ng-container>
+
+        <!-- Usuario Especialista -->
+        <ng-container *ngIf="user.role === 'especialista'">
+          <a routerLink="/especialista/mis-turnos" class="nav-link" (click)="menuAbierto = false">
+            Mis Turnos
+          </a>
+          <a routerLink="/especialista/pacientes" class="nav-link" (click)="menuAbierto = false">
+            Pacientes
+          </a>
+          <a routerLink="/especialista/mi-perfil" class="nav-link" (click)="menuAbierto = false">
+            Mi Perfil
+          </a>
+        </ng-container>
+
+        <!-- Usuario Admin -->
+        <ng-container *ngIf="user.role === 'administrador'">
+          <a routerLink="/admin/usuarios" class="nav-link" (click)="menuAbierto = false">
+            Usuarios
+          </a>
+          <a routerLink="/admin/turnos" class="nav-link" (click)="menuAbierto = false">
+            Turnos
+          </a>
+          <a routerLink="/admin/estadisticas" class="nav-link" (click)="menuAbierto = false">
+            Estadísticas
+          </a>
+        </ng-container>
+
+        <!-- Botón Logout -->
+        <button class="btn-logout" (click)="logout()">
+          <i class="pi pi-sign-out"></i>
+          Salir
+        </button>
+      </ng-container>
     </div>
   </div>
 </nav>
