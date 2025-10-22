@@ -1,1 +1,36 @@
-<p>registro works!</p>
+<div class="registro-container">
+    <div class="registro-card">
+      <h2>Crear Cuenta</h2>
+      <p>Selecciona el tipo de cuenta que deseas crear</p>
+  
+      <div class="tipo-selector" *ngIf="!tipoSeleccionado">
+        <div class="tipo-card" (click)="seleccionarTipo('paciente')">
+          <i class="pi pi-user"></i>
+          <h3>Paciente</h3>
+          <p>Solicita turnos y accede a tu historia clínica</p>
+        </div>
+  
+        <div class="tipo-card" (click)="seleccionarTipo('especialista')">
+          <i class="pi pi-id-card"></i>
+          <h3>Especialista</h3>
+          <p>Gestiona turnos y atiende pacientes</p>
+        </div>
+      </div>
+  
+      <app-registro-paciente *ngIf="tipoSeleccionado === 'paciente'"></app-registro-paciente>
+      <app-registro-especialista *ngIf="tipoSeleccionado === 'especialista'"></app-registro-especialista>
+  
+      <div class="back-button" *ngIf="tipoSeleccionado">
+        <button class="btn btn-secondary" (click)="tipoSeleccionado = null">
+          <i class="pi pi-arrow-left"></i>
+          Volver
+        </button>
+      </div>
+  
+      <div class="registro-footer">
+        <p>¿Ya tienes cuenta? 
+          <a routerLink="/login" class="link">Inicia sesión aquí</a>
+        </p>
+      </div>
+    </div>
+  </div>

@@ -93,11 +93,35 @@ export class AuthService {
         fechaRegistro: new Date(),
       };
 
-      const userDocRef = doc(this.firestore, `usuarios/${user.uid}`);
-      await setDoc(userDocRef, {
-        ...nuevoUsuario,
+      // Filtrar campos undefined para Firestore
+      const dataToSave: any = {
+        uid: nuevoUsuario.uid,
+        email: nuevoUsuario.email,
+        nombre: nuevoUsuario.nombre,
+        apellido: nuevoUsuario.apellido,
+        edad: nuevoUsuario.edad,
+        dni: nuevoUsuario.dni,
+        role: nuevoUsuario.role,
+        imagenPerfil: nuevoUsuario.imagenPerfil,
+        aprobado: nuevoUsuario.aprobado,
+        emailVerificado: nuevoUsuario.emailVerificado,
+        activo: nuevoUsuario.activo,
         fechaRegistro: serverTimestamp()
-      });
+      };
+
+      // Agregar campos opcionales solo si existen
+      if (userData.imagenPerfil2) {
+        dataToSave.imagenPerfil2 = userData.imagenPerfil2;
+      }
+      if (userData.obraSocial) {
+        dataToSave.obraSocial = userData.obraSocial;
+      }
+      if (userData.especialidades && userData.especialidades.length > 0) {
+        dataToSave.especialidades = userData.especialidades;
+      }
+
+      const userDocRef = doc(this.firestore, `usuarios/${user.uid}`);
+      await setDoc(userDocRef, dataToSave);
 
       await sendEmailVerification(user);
 
@@ -217,4 +241,7 @@ export class AuthService {
     const cred = credenciales[tipoUsuario];
     await this.login(cred.email, cred.password);
   }
+
+
+  
 }

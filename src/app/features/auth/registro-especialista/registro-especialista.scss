@@ -1,0 +1,167 @@
+.registro-especialista-form {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+    
+    label {
+      display: block;
+      color: #00adb5;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(0, 173, 181, 0.3);
+      border-radius: 5px;
+      color: #eee;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: #00adb5;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      
+      &.invalid {
+        border-color: #e74c3c;
+      }
+    }
+    
+    .error-message {
+      color: #e74c3c;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+    }
+  }
+  
+  .especialidades-section {
+    margin-bottom: 1.5rem;
+    
+    h4 {
+      color: #00adb5;
+      margin-bottom: 1rem;
+    }
+    
+    .especialidades-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      
+      .especialidad-item {
+        padding: 0.75rem;
+        background: rgba(0, 173, 181, 0.1);
+        border: 2px solid rgba(0, 173, 181, 0.3);
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          background: rgba(0, 173, 181, 0.2);
+        }
+        
+        &.selected {
+          background: rgba(0, 173, 181, 0.3);
+          border-color: #00adb5;
+        }
+      }
+    }
+    
+    .nueva-especialidad {
+      display: flex;
+      gap: 0.5rem;
+      
+      input {
+        flex: 1;
+      }
+      
+      button {
+        padding: 0.75rem 1.5rem;
+        background: rgba(0, 173, 181, 0.2);
+        border: 1px solid #00adb5;
+        color: #00adb5;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          background: #00adb5;
+          color: #fff;
+        }
+      }
+    }
+  }
+  
+  .imagen-upload {
+    margin-bottom: 1.5rem;
+    
+    .upload-label {
+      display: block;
+      padding: 1rem;
+      background: rgba(0, 173, 181, 0.1);
+      border: 2px dashed rgba(0, 173, 181, 0.5);
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: rgba(0, 173, 181, 0.2);
+        border-color: #00adb5;
+      }
+      
+      i {
+        font-size: 2rem;
+        color: #00adb5;
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+    }
+    
+    input[type="file"] {
+      display: none;
+    }
+    
+    .preview {
+      margin-top: 1rem;
+      
+      img {
+        max-width: 200px;
+        border-radius: 8px;
+        border: 2px solid #00adb5;
+      }
+    }
+  }
+  
+  .btn-submit {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #00adb5 0%, #00d4ff 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 173, 181, 0.4);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
