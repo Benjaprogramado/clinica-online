@@ -154,6 +154,7 @@ export class AuthService {
       );
 
       const user = userCredential.user;
+      console.log('UID del usuario en Firebase Auth:', user.uid);
       const userDocRef = doc(this.firestore, `usuarios/${user.uid}`);
       const userDoc = await getDoc(userDocRef);
 
@@ -168,6 +169,10 @@ export class AuthService {
         throw new Error('Tu cuenta ha sido deshabilitada.');
       }
 
+      // Debug temporal
+      console.log('Email verificado en Firebase Auth:', user.emailVerified);
+      console.log('Role del usuario:', userData.role);
+      
       if (userData.role === 'paciente' && !user.emailVerified) {
         await this.logout();
         throw new Error('Debes verificar tu email.');
