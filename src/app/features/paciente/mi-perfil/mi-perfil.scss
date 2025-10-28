@@ -1,0 +1,29 @@
+@import '../../../styles/variables';
+
+.mi-perfil-container {
+  min-height: calc(100vh - 200px);
+  padding: 2rem 0;
+
+  .custom-card {
+    background: $card-background;
+    border: 1px solid $border-color;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    .card-header {
+      background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
+      color: white !important;
+      padding: 1.5rem;
+      border-radius: 12px 12px 0 0;
+
+      h2, h3, h4, h5, h6, p, span, i {
+        color: white !important;
+      }
+    }
+
+    .card-body {
+      padding: 2rem;
+    }
+  }
+}
+

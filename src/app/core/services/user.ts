@@ -8,7 +8,6 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   CollectionReference,
   serverTimestamp
 } from '@angular/fire/firestore';
@@ -21,10 +20,9 @@ import { Usuario, TipoUsuario } from '../models/user.model';
 })
 export class UserService {
   private firestore = inject(Firestore);
-  private usuariosCollection: CollectionReference;
-
-  constructor() {
-    this.usuariosCollection = collection(this.firestore, 'usuarios');
+  
+  private get usuariosCollection(): CollectionReference {
+    return collection(this.firestore, 'usuarios');
   }
 
   getUsuarioById(uid: string): Observable<Usuario | null> {
@@ -40,14 +38,10 @@ export class UserService {
   }
 
   getTodosLosUsuarios(): Observable<Usuario[]> {
-    const q = query(
-      this.usuariosCollection,
-      orderBy('fechaRegistro', 'desc')
-    );
-
-    return from(getDocs(q)).pipe(
+    // Ordenar en memoria para evitar problemas con índices
+    return from(getDocs(this.usuariosCollection)).pipe(
       map(querySnapshot => {
-        return querySnapshot.docs.map(docSnap => {
+        const usuarios = querySnapshot.docs.map(docSnap => {
           const data = docSnap.data() as Usuario;
           // Asegurar que el UID esté presente (puede venir del ID del documento o del campo)
           if (!data.uid) {
@@ -55,26 +49,49 @@ export class UserService {
           }
           return data;
         });
+        
+        // Ordenar en memoria por fechaRegistro (más reciente primero)
+        return usuarios.sort((a, b) => {
+          const fechaA = a.fechaRegistro instanceof Date 
+            ? a.fechaRegistro.getTime() 
+            : (a.fechaRegistro as any)?.seconds * 1000 || 0;
+          const fechaB = b.fechaRegistro instanceof Date 
+            ? b.fechaRegistro.getTime() 
+            : (b.fechaRegistro as any)?.seconds * 1000 || 0;
+          return fechaB - fechaA; // Descendente
+        });
       })
     );
   }
 
   getUsuariosPorRol(role: TipoUsuario): Observable<Usuario[]> {
+    // No usar orderBy con where para evitar necesidad de índice compuesto
+    // Ordenaremos en memoria después
     const q = query(
       this.usuariosCollection,
-      where('role', '==', role),
-      orderBy('fechaRegistro', 'desc')
+      where('role', '==', role)
     );
 
     return from(getDocs(q)).pipe(
       map(querySnapshot => {
-        return querySnapshot.docs.map(docSnap => {
+        const usuarios = querySnapshot.docs.map(docSnap => {
           const data = docSnap.data() as Usuario;
           // Asegurar que el UID esté presente
           if (!data.uid) {
             data.uid = docSnap.id;
           }
           return data;
+        });
+        
+        // Ordenar en memoria por fechaRegistro (más reciente primero)
+        return usuarios.sort((a, b) => {
+          const fechaA = a.fechaRegistro instanceof Date 
+            ? a.fechaRegistro.getTime() 
+            : (a.fechaRegistro as any)?.seconds * 1000 || 0;
+          const fechaB = b.fechaRegistro instanceof Date 
+            ? b.fechaRegistro.getTime() 
+            : (b.fechaRegistro as any)?.seconds * 1000 || 0;
+          return fechaB - fechaA; // Descendente
         });
       })
     );

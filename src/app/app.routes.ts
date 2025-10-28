@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
 import { roleGuard } from './core/guards/role-guard';
-// import { especialistaAprobadoGuard } from './core/guards/especialista-aprobado-guard';
+import { especialistaAprobadoGuard } from './core/guards/especialista-aprobado-guard';
 
 export const routes: Routes = [
   {
@@ -46,6 +46,7 @@ export const routes: Routes = [
       import('./features/auth/pendiente-aprobacion/pendiente-aprobacion').then(m => m.PendienteAprobacion),
     title: 'Pendiente de Aprobación'
   },
+  // Rutas Admin
   {
     path: 'admin/usuarios',
     canActivate: [authGuard, roleGuard],
@@ -54,21 +55,56 @@ export const routes: Routes = [
       import('./features/admin/usuarios/usuarios').then(m => m.Usuarios),
     title: 'Gestión de Usuarios'
   },
-  // TODO: Agregar rutas de especialista y paciente cuando se implementen los módulos
-  // {
-  //   path: 'especialista',
-  //   canActivate: [authGuard, roleGuard, especialistaAprobadoGuard],
-  //   data: { roles: ['especialista'] },
-  //   loadChildren: () =>
-  //     import('./features/especialista/especialista.routes').then(m => m.routes)
-  // },
-  // {
-  //   path: 'paciente',
-  //   canActivate: [authGuard, roleGuard],
-  //   data: { roles: ['paciente'] },
-  //   loadChildren: () =>
-  //     import('./features/paciente/paciente.routes').then(m => m.routes)
-  // },
+  {
+    path: 'admin/turnos',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['administrador'] },
+    loadComponent: () =>
+      import('./features/admin/turnos/turnos').then(m => m.TurnosAdminComponent),
+    title: 'Gestión de Turnos'
+  },
+  // Rutas Paciente
+  {
+    path: 'paciente/solicitar-turno',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['paciente'] },
+    loadComponent: () =>
+      import('./features/paciente/solicitar-turno/solicitar-turno').then(m => m.SolicitarTurnoComponent),
+    title: 'Solicitar Turno'
+  },
+  {
+    path: 'paciente/mis-turnos',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['paciente'] },
+    loadComponent: () =>
+      import('./features/paciente/mis-turnos/mis-turnos').then(m => m.MisTurnosPacienteComponent),
+    title: 'Mis Turnos'
+  },
+  {
+    path: 'paciente/mi-perfil',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['paciente'] },
+    loadComponent: () =>
+      import('./features/paciente/mi-perfil/mi-perfil').then(m => m.MiPerfilPacienteComponent),
+    title: 'Mi Perfil'
+  },
+  // Rutas Especialista
+  {
+    path: 'especialista/mis-turnos',
+    canActivate: [authGuard, roleGuard, especialistaAprobadoGuard],
+    data: { roles: ['especialista'] },
+    loadComponent: () =>
+      import('./features/especialista/mis-turnos/mis-turnos').then(m => m.MisTurnosEspecialistaComponent),
+    title: 'Mis Turnos'
+  },
+  {
+    path: 'especialista/mi-perfil',
+    canActivate: [authGuard, roleGuard, especialistaAprobadoGuard],
+    data: { roles: ['especialista'] },
+    loadComponent: () =>
+      import('./features/especialista/mi-perfil/mi-perfil').then(m => m.MiPerfilEspecialistaComponent),
+    title: 'Mi Perfil'
+  },
   {
     path: '**',
     loadComponent: () =>

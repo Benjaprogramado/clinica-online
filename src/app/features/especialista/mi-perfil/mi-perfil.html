@@ -1,0 +1,165 @@
+<div class="mi-perfil-container">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-10">
+        <!-- Formulario de Disponibilidad -->
+        <div class="card custom-card mb-4">
+          <div class="card-header">
+            <h2 class="mb-0">
+              <i class="pi pi-clock me-2"></i>
+              Configurar Disponibilidad Horaria
+            </h2>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="formulario" (ngSubmit)="onSubmit()">
+              <!-- Especialidad -->
+              <div class="mb-4">
+                <label class="form-label fw-bold">
+                  Especialidad <span class="text-danger">*</span>
+                </label>
+                <div class="d-flex flex-wrap gap-2">
+                  @for (esp of especialidades(); track esp) {
+                    <button
+                      type="button"
+                      class="btn"
+                      [class.btn-primary]="formulario.get('especialidad')?.value === esp"
+                      [class.btn-outline-primary]="formulario.get('especialidad')?.value !== esp"
+                      (click)="formulario.patchValue({ especialidad: esp })">
+                      {{ esp }}
+                    </button>
+                  }
+                </div>
+                @if (formulario.get('especialidad')?.invalid && formulario.get('especialidad')?.touched) {
+                  <div class="text-danger small mt-1">
+                    Selecciona una especialidad
+                  </div>
+                }
+              </div>
+
+              <!-- Días de la Semana -->
+              <div class="mb-4">
+                <label class="form-label fw-bold">
+                  Días disponibles <span class="text-danger">*</span>
+                </label>
+                <div class="d-flex flex-wrap gap-2">
+                  @for (dia of diasSemana; track dia) {
+                    <button
+                      type="button"
+                      class="btn"
+                      [class.btn-primary]="diaEstaSeleccionado(dia)"
+                      [class.btn-outline-primary]="!diaEstaSeleccionado(dia)"
+                      (click)="toggleDia(dia)">
+                      {{ obtenerTextoDia(dia) }}
+                    </button>
+                  }
+                </div>
+                @if (diasArray.length === 0 && formulario.get('dias')?.touched) {
+                  <div class="text-danger small mt-1">
+                    Selecciona al menos un día
+                  </div>
+                }
+              </div>
+
+              <!-- Horarios -->
+              <div class="row mb-4">
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">
+                    Hora de inicio <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    class="form-control"
+                    formControlName="horaInicio"
+                    required>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">
+                    Hora de fin <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    class="form-control"
+                    formControlName="horaFin"
+                    required>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">
+                    Duración turno (min) <span class="text-danger">*</span>
+                  </label>
+                  <div class="d-flex flex-wrap gap-2">
+                    @for (duracion of duracionesTurno; track duracion) {
+                      <button
+                        type="button"
+                        class="btn btn-sm"
+                        [class.btn-primary]="formulario.get('duracionTurno')?.value === duracion"
+                        [class.btn-outline-primary]="formulario.get('duracionTurno')?.value !== duracion"
+                        (click)="formulario.patchValue({ duracionTurno: duracion })">
+                        {{ duracion }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Botón Guardar -->
+              <div class="d-flex justify-content-end">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  [disabled]="formulario.invalid">
+                  <i class="pi pi-save me-2"></i>
+                  Guardar Disponibilidad
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Disponibilidades Guardadas -->
+        <div class="card custom-card">
+          <div class="card-header">
+            <h3 class="mb-0">
+              <i class="pi pi-list me-2"></i>
+              Mis Disponibilidades
+            </h3>
+          </div>
+          <div class="card-body">
+            @if (disponibilidadesGuardadas().length === 0) {
+              <div class="alert alert-info">
+                No tienes disponibilidades configuradas.
+              </div>
+            } @else {
+              <div class="row g-3">
+                @for (disp of disponibilidadesGuardadas(); track disp.id) {
+                  <div class="col-12 col-md-6">
+                    <div class="card bg-dark border-primary">
+                      <div class="card-body">
+                        <h5>{{ disp.especialidad }}</h5>
+                        <p><strong>Días:</strong> 
+                          @for (dia of disp.dias; track dia) {
+                            {{ obtenerTextoDia(dia) }}
+                            @if (dia !== disp.dias[disp.dias.length - 1]) {
+                              ,
+                            }
+                          }
+                        </p>
+                        <p><strong>Horario:</strong> {{ disp.horaInicio }} - {{ disp.horaFin }}</p>
+                        <p><strong>Duración:</strong> {{ disp.duracionTurno }} minutos</p>
+                        <button
+                          class="btn btn-sm btn-danger"
+                          (click)="eliminarDisponibilidad(disp)">
+                          <i class="pi pi-trash me-1"></i>
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

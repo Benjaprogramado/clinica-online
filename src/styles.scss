@@ -15,6 +15,72 @@ html, body {
   color: $text-light;
 }
 
+// Asegurar que los encabezados en card-header siempre sean blancos
+.card-header {
+  h1, h2, h3, h4, h5, h6, p, span, i, .pi {
+    color: white !important;
+  }
+}
+
+// Estilos globales para formularios en tema oscuro
+.form-label,
+label,
+label.fw-bold,
+.form-label.fw-bold {
+  color: #eee !important;
+  font-weight: 600;
+}
+
+// Texto en pequeños y spans dentro de labels
+label small,
+.form-label small,
+label span,
+.form-label span {
+  color: #eee !important;
+}
+
+// Placeholders en inputs y textareas
+.form-control::placeholder,
+input::placeholder,
+textarea::placeholder,
+.form-control::-webkit-input-placeholder,
+.form-control::-moz-placeholder,
+.form-control:-ms-input-placeholder {
+  color: #bbb !important;
+  opacity: 1;
+}
+
+// Texto en inputs y textareas
+.form-control,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="number"],
+textarea {
+  color: #eee !important;
+  
+  &::placeholder {
+    color: #bbb !important;
+    opacity: 1;
+  }
+  
+  &::-webkit-input-placeholder {
+    color: #bbb !important;
+    opacity: 1;
+  }
+  
+  &::-moz-placeholder {
+    color: #bbb !important;
+    opacity: 1;
+  }
+  
+  &:-ms-input-placeholder {
+    color: #bbb !important;
+    opacity: 1;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 10px;
 }

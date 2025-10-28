@@ -1,0 +1,176 @@
+<div class="mis-turnos-container">
+  <div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0">
+        <i class="pi pi-calendar me-2"></i>
+        Mis Turnos
+      </h2>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card custom-card mb-4">
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- Filtro Estado -->
+          <div class="col-12 col-md-6 col-lg-3">
+            <label class="form-label fw-bold">Estado</label>
+            <div class="d-flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-primary]="filtros().estado === 'todos'"
+                [class.btn-outline-primary]="filtros().estado !== 'todos'"
+                (click)="aplicarFiltroEstado('todos')">
+                Todos
+              </button>
+              @for (estado of estados; track estado) {
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-primary]="filtros().estado === estado"
+                  [class.btn-outline-primary]="filtros().estado !== estado"
+                  (click)="aplicarFiltroEstado(estado)">
+                  {{ obtenerTextoEstado(estado) }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Filtro Especialidad -->
+          <div class="col-12 col-md-6 col-lg-4">
+            <label class="form-label fw-bold">Especialidad</label>
+            <input
+              type="text"
+              class="form-control"
+              [ngModel]="filtros().especialidad"
+              (ngModelChange)="aplicarFiltroEspecialidad($event)"
+              placeholder="Buscar por especialidad...">
+          </div>
+
+          <!-- Filtro Búsqueda -->
+          <div class="col-12 col-md-6 col-lg-4">
+            <label class="form-label fw-bold">Buscar Paciente</label>
+            <input
+              type="text"
+              class="form-control"
+              [ngModel]="filtros().textoBusqueda"
+              (ngModelChange)="aplicarFiltroBusqueda($event)"
+              placeholder="Buscar por nombre, apellido o DNI...">
+          </div>
+
+          <!-- Botón Limpiar -->
+          <div class="col-12 col-md-6 col-lg-1">
+            <label class="form-label fw-bold d-block">&nbsp;</label>
+            <button
+              type="button"
+              class="btn btn-outline-secondary w-100"
+              (click)="limpiarFiltros()">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Turnos -->
+    @if (turnosFiltrados().length === 0) {
+      <div class="alert alert-info">
+        <i class="pi pi-info-circle me-2"></i>
+        No hay turnos para mostrar.
+      </div>
+    } @else {
+      <div class="row g-4">
+        @for (turno of turnosFiltrados(); track turno.id) {
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="card custom-card h-100">
+              <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="badge" [ngClass]="'bg-' + obtenerColorEstado(turno.estado)">
+                    {{ obtenerTextoEstado(turno.estado) }}
+                  </span>
+                  <small class="text-muted">
+                    {{ turno.fecha | date:'dd/MM/yyyy' }}
+                  </small>
+                </div>
+              </div>
+              <div class="card-body">
+                <h5 class="card-title">{{ turno.especialidad }}</h5>
+                <p class="card-text">
+                  <strong>Paciente:</strong><br>
+                  {{ turno.pacienteNombre }} {{ turno.pacienteApellido }}<br>
+                  <small>DNI: {{ turno.pacienteDNI }}</small>
+                </p>
+                <p class="card-text">
+                  <strong>Hora:</strong> {{ turno.hora }}
+                </p>
+                @if (turno.pacienteObraSocial) {
+                  <p class="card-text">
+                    <small><strong>Obra Social:</strong> {{ turno.pacienteObraSocial }}</small>
+                  </p>
+                }
+                @if (turno.comentarioPaciente) {
+                  <p class="card-text">
+                    <small class="text-muted">
+                      <strong>Comentario del paciente:</strong> {{ turno.comentarioPaciente }}
+                    </small>
+                  </p>
+                }
+                @if (turno.comentarioEspecialista) {
+                  <p class="card-text">
+                    <small class="text-info">
+                      <strong>Tu comentario:</strong> {{ turno.comentarioEspecialista }}
+                    </small>
+                  </p>
+                }
+                @if (turno.resena) {
+                  <div class="mt-2">
+                    <strong>Reseña:</strong>
+                    <div>
+                      @for (i of [1,2,3,4,5]; track i) {
+                        <i class="pi" [class.pi-star-fill]="i <= turno.resena!.calificacion" [class.pi-star]="i > turno.resena!.calificacion" [class.text-warning]="i <= turno.resena!.calificacion"></i>
+                      }
+                    </div>
+                    <p class="small mt-1">{{ turno.resena.comentario }}</p>
+                  </div>
+                }
+              </div>
+              <div class="card-footer">
+                <div class="d-flex flex-wrap gap-2">
+                  @if (turno.estado === 'pendiente') {
+                    <button
+                      class="btn btn-sm btn-success"
+                      (click)="aceptarTurno(turno)">
+                      <i class="pi pi-check me-1"></i>
+                      Aceptar
+                    </button>
+                    <button
+                      class="btn btn-sm btn-danger"
+                      (click)="rechazarTurno(turno)">
+                      <i class="pi pi-times me-1"></i>
+                      Rechazar
+                    </button>
+                  }
+                  @if (turno.estado === 'aceptado') {
+                    <button
+                      class="btn btn-sm btn-warning"
+                      (click)="cancelarTurno(turno)">
+                      <i class="pi pi-times me-1"></i>
+                      Cancelar
+                    </button>
+                    <button
+                      class="btn btn-sm btn-primary"
+                      (click)="finalizarTurno(turno)">
+                      <i class="pi pi-check-circle me-1"></i>
+                      Finalizar
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
