@@ -69,26 +69,112 @@
       <div class="accesos-rapidos">
         <p class="accesos-title">Accesos Rápidos (Testing)</p>
         <div class="accesos-grid">
+          <!-- 3 Pacientes -->
           <button
             type="button"
-            class="btn btn-outline-info btn-sm"
-            (click)="loginRapido('paciente')"
-            [disabled]="cargando()">
-            Paciente
+            class="btn-acceso-rapido"
+            (click)="loginRapido('paciente1')"
+            [disabled]="cargando()"
+            title="{{ usuariosPrueba().paciente1.nombre }} {{ usuariosPrueba().paciente1.apellido }}">
+            <img 
+              *ngIf="shouldShowImage('paciente1')"
+              [src]="getImageSrc('paciente1')" 
+              alt="Paciente 1"
+              (error)="onImageError($event, 'paciente1')"
+              (load)="onImageLoad($event, 'paciente1')">
+            <div class="img-placeholder" *ngIf="shouldShowPlaceholder('paciente1')">
+              <i class="pi pi-user"></i>
+            </div>
+            <span>{{ usuariosPrueba().paciente1.nombre }}</span>
           </button>
           <button
             type="button"
-            class="btn btn-outline-warning btn-sm"
-            (click)="loginRapido('especialista')"
-            [disabled]="cargando()">
-            Especialista
+            class="btn-acceso-rapido"
+            (click)="loginRapido('paciente2')"
+            [disabled]="cargando()"
+            title="{{ usuariosPrueba().paciente2.nombre }} {{ usuariosPrueba().paciente2.apellido }}">
+            <img 
+              *ngIf="shouldShowImage('paciente2')"
+              [src]="getImageSrc('paciente2')" 
+              alt="Paciente 2"
+              (error)="onImageError($event, 'paciente2')"
+              (load)="onImageLoad($event, 'paciente2')">
+            <div class="img-placeholder" *ngIf="shouldShowPlaceholder('paciente2')">
+              <i class="pi pi-user"></i>
+            </div>
+            <span>{{ usuariosPrueba().paciente2.nombre }}</span>
           </button>
           <button
             type="button"
-            class="btn btn-outline-danger btn-sm"
+            class="btn-acceso-rapido"
+            (click)="loginRapido('paciente3')"
+            [disabled]="cargando()"
+            title="{{ usuariosPrueba().paciente3.nombre }} {{ usuariosPrueba().paciente3.apellido }}">
+            <img 
+              *ngIf="shouldShowImage('paciente3')"
+              [src]="getImageSrc('paciente3')" 
+              alt="Paciente 3"
+              (error)="onImageError($event, 'paciente3')"
+              (load)="onImageLoad($event, 'paciente3')">
+            <div class="img-placeholder" *ngIf="shouldShowPlaceholder('paciente3')">
+              <i class="pi pi-user"></i>
+            </div>
+            <span>{{ usuariosPrueba().paciente3.nombre }}</span>
+          </button>
+          
+          <!-- 2 Especialistas -->
+          <button
+            type="button"
+            class="btn-acceso-rapido"
+            (click)="loginRapido('especialista1')"
+            [disabled]="cargando()"
+            title="{{ usuariosPrueba().especialista1.nombre }} {{ usuariosPrueba().especialista1.apellido }}">
+            <img 
+              *ngIf="shouldShowImage('especialista1')"
+              [src]="getImageSrc('especialista1')" 
+              alt="Especialista 1"
+              (error)="onImageError($event, 'especialista1')"
+              (load)="onImageLoad($event, 'especialista1')">
+            <div class="img-placeholder" *ngIf="shouldShowPlaceholder('especialista1')">
+              <i class="pi pi-id-card"></i>
+            </div>
+            <span>{{ usuariosPrueba().especialista1.nombre }}</span>
+          </button>
+          <button
+            type="button"
+            class="btn-acceso-rapido"
+            (click)="loginRapido('especialista2')"
+            [disabled]="cargando()"
+            title="{{ usuariosPrueba().especialista2.nombre }} {{ usuariosPrueba().especialista2.apellido }}">
+            <img 
+              *ngIf="shouldShowImage('especialista2')"
+              [src]="getImageSrc('especialista2')" 
+              alt="Especialista 2"
+              (error)="onImageError($event, 'especialista2')"
+              (load)="onImageLoad($event, 'especialista2')">
+            <div class="img-placeholder" *ngIf="shouldShowPlaceholder('especialista2')">
+              <i class="pi pi-id-card"></i>
+            </div>
+            <span>{{ usuariosPrueba().especialista2.nombre }}</span>
+          </button>
+          
+          <!-- 1 Admin -->
+          <button
+            type="button"
+            class="btn-acceso-rapido"
             (click)="loginRapido('admin')"
-            [disabled]="cargando()">
-            Admin
+            [disabled]="cargando()"
+            title="{{ usuariosPrueba().admin.nombre }} {{ usuariosPrueba().admin.apellido }}">
+            <img 
+              *ngIf="shouldShowImage('admin')"
+              [src]="getImageSrc('admin')" 
+              alt="Admin"
+              (error)="onImageError($event, 'admin')"
+              (load)="onImageLoad($event, 'admin')">
+            <div class="img-placeholder" *ngIf="shouldShowPlaceholder('admin')">
+              <i class="pi pi-shield"></i>
+            </div>
+            <span>{{ usuariosPrueba().admin.nombre }}</span>
           </button>
         </div>
       </div>

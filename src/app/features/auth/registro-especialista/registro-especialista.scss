@@ -92,10 +92,28 @@
         cursor: pointer;
         transition: all 0.3s ease;
         
-        &:hover {
+        &:hover:not(:disabled) {
           background: #00adb5;
           color: #fff;
         }
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+    
+    .info-text {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      i {
+        color: #00adb5;
       }
     }
   }
@@ -164,5 +182,6 @@
     }
   }
 }
+
 
 

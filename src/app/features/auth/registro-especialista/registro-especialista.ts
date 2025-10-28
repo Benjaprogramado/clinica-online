@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 import { StorageService } from '../../../core/services/storage';
+import { EspecialidadesService } from '../../../core/services/especialidades';
 
 @Component({
   selector: 'app-registro-especialista',
@@ -12,10 +13,11 @@ import { StorageService } from '../../../core/services/storage';
   templateUrl: './registro-especialista.html',
   styleUrl: './registro-especialista.scss'
 })
-export class RegistroEspecialistaComponent {
+export class RegistroEspecialistaComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private storageService = inject(StorageService);
+  private especialidadesService = inject(EspecialidadesService);
   private router = inject(Router);
 
   registroForm: FormGroup;
@@ -23,19 +25,35 @@ export class RegistroEspecialistaComponent {
   imagenPreview = signal<string | null>(null);
   imagenFile: File | null = null;
 
-  especialidadesDisponibles = [
-    'Cardiología',
-    'Dermatología',
-    'Gastroenterología',
-    'Neurología',
-    'Oftalmología',
-    'Pediatría',
-    'Psiquiatría',
-    'Traumatología'
-  ];
-
+  especialidadesDisponibles: string[] = [];
   especialidadesSeleccionadas: string[] = [];
   nuevaEspecialidad = '';
+
+  ngOnInit(): void {
+    this.cargarEspecialidades();
+  }
+
+  async cargarEspecialidades(): Promise<void> {
+    this.especialidadesService.obtenerEspecialidades().subscribe({
+      next: (especialidades) => {
+        this.especialidadesDisponibles = especialidades;
+      },
+      error: (error) => {
+        console.error('Error cargando especialidades:', error);
+        // Usar lista inicial en caso de error
+        this.especialidadesDisponibles = [
+          'Cardiología',
+          'Dermatología',
+          'Gastroenterología',
+          'Neurología',
+          'Oftalmología',
+          'Pediatría',
+          'Psiquiatría',
+          'Traumatología'
+        ];
+      }
+    });
+  }
 
   constructor() {
     this.registroForm = this.fb.group({
@@ -72,11 +90,36 @@ export class RegistroEspecialistaComponent {
     }
   }
 
-  agregarNuevaEspecialidad(): void {
+  async agregarNuevaEspecialidad(): Promise<void> {
     if (this.nuevaEspecialidad.trim()) {
-      this.especialidadesSeleccionadas.push(this.nuevaEspecialidad.trim());
+      const especialidadNormalizada = this.capitalizarTexto(this.nuevaEspecialidad.trim());
+      
+      // Agregar a la selección actual
+      this.especialidadesSeleccionadas.push(especialidadNormalizada);
+      
+      // Guardar en Firestore
+      try {
+        await this.especialidadesService.agregarEspecialidad(especialidadNormalizada);
+        
+        // Si no existe en la lista de disponibles, agregarla
+        if (!this.especialidadesDisponibles.includes(especialidadNormalizada)) {
+          this.especialidadesDisponibles.push(especialidadNormalizada);
+          this.especialidadesDisponibles.sort();
+        }
+      } catch (error) {
+        console.error('Error guardando especialidad:', error);
+        // Continuar de todas formas
+      }
+      
       this.nuevaEspecialidad = '';
     }
+  }
+
+  private capitalizarTexto(texto: string): string {
+    return texto
+      .split(' ')
+      .map(palabra => palabra.charAt(0).toUpperCase() + palabra.slice(1).toLowerCase())
+      .join(' ');
   }
 
   onImagenSeleccionada(event: any): void {
@@ -108,6 +151,13 @@ export class RegistroEspecialistaComponent {
     try {
       const formData = this.registroForm.value;
       
+      // Agregar las especialidades seleccionadas (funciona sin autenticación gracias a las reglas)
+      try {
+        await this.especialidadesService.agregarEspecialidades(this.especialidadesSeleccionadas);
+      } catch (error) {
+        console.warn('Error al agregar especialidades:', error);
+      }
+      
       const nuevoUsuario = await this.authService.registrarUsuario(
         formData.email,
         formData.password,
@@ -129,7 +179,7 @@ export class RegistroEspecialistaComponent {
 
       await this.authService.actualizarImagenes(nuevoUsuario.uid, urlImagen);
 
-      this.router.navigate(['/pendiente-aprobacion']);
+      // El servicio auth ya redirige al login después de mostrar el mensaje
     } catch (error) {
       console.error('Error en registro:', error);
     } finally {

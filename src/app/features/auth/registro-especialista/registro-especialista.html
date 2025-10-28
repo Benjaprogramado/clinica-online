@@ -81,10 +81,14 @@
           placeholder="Agregar nueva especialidad"
           (keyup.enter)="agregarNuevaEspecialidad()"
         >
-        <button type="button" (click)="agregarNuevaEspecialidad()">
+        <button type="button" (click)="agregarNuevaEspecialidad()" [disabled]="!nuevaEspecialidad.trim()">
           <i class="pi pi-plus"></i>
         </button>
       </div>
+      <p class="info-text">
+        <i class="pi pi-info-circle"></i>
+        Las especialidades que agregues estarán disponibles para futuros registros.
+      </p>
     </div>
 
     <div class="form-group">

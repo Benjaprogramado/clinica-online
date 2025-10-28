@@ -117,7 +117,7 @@ export class RegistroPacienteComponent {
       // Actualizar URLs en Firestore
       await this.authService.actualizarImagenes(nuevoUsuario.uid, urlImagen1, urlImagen2);
 
-      this.router.navigate(['/verificar-email']);
+      // El servicio auth ya redirige al login después de mostrar el mensaje
     } catch (error) {
       console.error('Error en registro:', error);
     } finally {

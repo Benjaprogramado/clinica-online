@@ -1,0 +1,64 @@
+.verificar-email-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  padding: 2rem;
+
+  .verificar-email-content {
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+    i {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h3 {
+      color: #00adb5;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 0.5rem;
+      
+      &.small {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.6);
+      }
+    }
+
+    .cargando {
+      .spinner-border {
+        width: 4rem;
+        height: 4rem;
+        margin-bottom: 1.5rem;
+      }
+    }
+
+    .exito,
+    .no-verificado,
+    .error {
+      animation: fadeIn 0.3s ease-in;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

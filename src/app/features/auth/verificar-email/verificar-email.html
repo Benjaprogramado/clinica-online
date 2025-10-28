@@ -1,1 +1,35 @@
-<p>verificar-email works!</p>
+<div class="verificar-email-container">
+  <div class="verificar-email-content">
+    <!-- Cargando -->
+    <div *ngIf="cargando && estado === ''" class="cargando">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p>Verificando tu email...</p>
+    </div>
+
+    <!-- Éxito -->
+    <div *ngIf="estado === 'exito'" class="exito">
+      <i class="bi bi-check-circle-fill text-success"></i>
+      <h3>¡Email Verificado!</h3>
+      <p>Tu email ha sido verificado correctamente.</p>
+      <p class="small">Serás redirigido en breve...</p>
+    </div>
+
+    <!-- No verificado -->
+    <div *ngIf="estado === 'no-verificado'" class="no-verificado">
+      <i class="bi bi-envelope-exclamation text-warning"></i>
+      <h3>Email No Verificado</h3>
+      <p>Tu email aún no ha sido verificado.</p>
+      <p class="small">Por favor, revisa tu bandeja de entrada y sigue el enlace enviado.</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="estado === 'error'" class="error">
+      <i class="bi bi-x-circle-fill text-danger"></i>
+      <h3>Error al Verificar</h3>
+      <p>Ocurrió un error al verificar tu email.</p>
+      <p class="small">Por favor, intenta nuevamente.</p>
+    </div>
+  </div>
+</div>

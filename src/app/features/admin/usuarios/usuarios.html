@@ -1,1 +1,110 @@
-<p>usuarios works!</p>
+<div class="usuarios-admin">
+  <div class="header">
+    <h1>Gestión de Usuarios</h1>
+    
+    <div class="filtros">
+      <div class="filtro-group">
+        <label>Filtrar por rol:</label>
+        <select [(ngModel)]="filtroRol" (change)="filtroRol.set(filtroRol())">
+          <option value="todos">Todos</option>
+          <option value="paciente">Pacientes</option>
+          <option value="especialista">Especialistas</option>
+          <option value="administrador">Administradores</option>
+        </select>
+      </div>
+      
+      <div class="filtro-group">
+        <label>Estado de aprobación:</label>
+        <select [(ngModel)]="filtroAprobacion" (change)="filtroAprobacion.set(filtroAprobacion())">
+          <option value="todos">Todos</option>
+          <option value="pendientes">Pendientes</option>
+          <option value="aprobados">Aprobados</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="pendientes-section" *ngIf="getEspecialistasPendientes().length > 0">
+    <h2>⚠️ Especialistas Pendientes de Aprobación ({{ getEspecialistasPendientes().length }})</h2>
+    <div class="alert alert-warning">
+      Hay especialistas que requieren aprobación antes de poder iniciar sesión.
+    </div>
+  </div>
+
+  <div class="table-container" *ngIf="!cargando()">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Especialidades</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let usuario of filtrarUsuarios()" [class.inactive]="!usuario.activo">
+          <td>
+            <span *ngIf="usuario.nombre && usuario.apellido">{{ usuario.nombre }} {{ usuario.apellido }}</span>
+            <span *ngIf="!usuario.nombre || !usuario.apellido" class="text-muted">
+              {{ usuario.email || usuario.uid || 'Sin nombre' }}
+            </span>
+          </td>
+          <td>{{ usuario.email || 'Sin email' }}</td>
+          <td>
+            <span class="badge" [class.badge-paciente]="usuario.role === 'paciente'"
+                             [class.badge-especialista]="usuario.role === 'especialista'"
+                             [class.badge-admin]="usuario.role === 'administrador'">
+              {{ usuario.role }}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [class.badge-ok]="usuario.activo && (usuario.aprobado !== false)"
+                             [class.badge-warning]="!usuario.activo || !usuario.aprobado">
+              <span *ngIf="usuario.role === 'especialista'">
+                {{ usuario.aprobado ? 'Aprobado' : 'Pendiente' }}
+              </span>
+              <span *ngIf="usuario.role !== 'especialista'">
+                {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </span>
+          </td>
+          <td>
+            <div *ngIf="usuario.especialidades && usuario.especialidades.length > 0" class="especialidades">
+              <span *ngFor="let esp of usuario.especialidades" class="badge badge-small">{{ esp }}</span>
+            </div>
+          </td>
+          <td class="acciones">
+            <button *ngIf="usuario.role === 'especialista' && !usuario.aprobado" 
+                    class="btn btn-success btn-sm"
+                    (click)="aprobarEspecialista(usuario)">
+              Aprobar
+            </button>
+            
+            <button *ngIf="usuario.activo" 
+                    class="btn btn-danger btn-sm"
+                    (click)="deshabilitarUsuario(usuario)">
+              Deshabilitar
+            </button>
+            
+            <button *ngIf="!usuario.activo" 
+                    class="btn btn-success btn-sm"
+                    (click)="habilitarUsuario(usuario)">
+              Habilitar
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <div *ngIf="filtrarUsuarios().length === 0" class="empty-state">
+      <p>No hay usuarios que coincidan con los filtros seleccionados.</p>
+    </div>
+  </div>
+
+  <div *ngIf="cargando()" class="loading">
+    <div class="spinner"></div>
+    <p>Cargando usuarios...</p>
+  </div>
+</div>

@@ -4,17 +4,31 @@
       <p>Selecciona el tipo de cuenta que deseas crear</p>
   
       <div class="tipo-selector" *ngIf="!tipoSeleccionado">
-        <div class="tipo-card" (click)="seleccionarTipo('paciente')">
-          <i class="pi pi-user"></i>
-          <h3>Paciente</h3>
-          <p>Solicita turnos y accede a tu historia clínica</p>
-        </div>
+        <button 
+          type="button"
+          class="btn-tipo-rectangular"
+          (click)="seleccionarTipo('paciente')">
+          <div class="btn-tipo-icon">
+            <i class="pi pi-user"></i>
+          </div>
+          <div class="btn-tipo-content">
+            <h3>Paciente</h3>
+            <p>Solicita turnos y accede a tu historia clínica</p>
+          </div>
+        </button>
   
-        <div class="tipo-card" (click)="seleccionarTipo('especialista')">
-          <i class="pi pi-id-card"></i>
-          <h3>Especialista</h3>
-          <p>Gestiona turnos y atiende pacientes</p>
-        </div>
+        <button 
+          type="button"
+          class="btn-tipo-rectangular"
+          (click)="seleccionarTipo('especialista')">
+          <div class="btn-tipo-icon">
+            <i class="pi pi-id-card"></i>
+          </div>
+          <div class="btn-tipo-content">
+            <h3>Especialista</h3>
+            <p>Gestiona turnos y atiende pacientes</p>
+          </div>
+        </button>
       </div>
   
       <app-registro-paciente *ngIf="tipoSeleccionado === 'paciente'"></app-registro-paciente>

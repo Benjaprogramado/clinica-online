@@ -1,6 +1,6 @@
-@import 'styles/variables';
-@import 'styles/mixins';
-@import 'styles/animations';
+@use 'styles/variables' as *;
+@use 'styles/mixins' as *;
+@use 'styles/animations' as *;
 
 * {
   margin: 0;

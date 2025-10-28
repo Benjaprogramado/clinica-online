@@ -7,7 +7,8 @@ import {
   sendEmailVerification,
   User,
   authState,
-  updateProfile
+  updateProfile,
+  onAuthStateChanged
 } from '@angular/fire/auth';
 import {
   Firestore,
@@ -15,7 +16,11 @@ import {
   setDoc,
   getDoc,
   updateDoc,
-  serverTimestamp
+  serverTimestamp,
+  collection,
+  query,
+  where,
+  getDocs
 } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
 import { Observable, from, of } from 'rxjs';
@@ -34,6 +39,39 @@ export class AuthService {
 
   currentUser = signal<Usuario | null>(null);
 
+  constructor() {
+    // Listen to auth state changes to sync emailVerificado field in Firestore
+    this.auth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser && firebaseUser.emailVerified) {
+        let userDocRef = doc(this.firestore, `usuarios/${firebaseUser.uid}`);
+        let userDoc = await getDoc(userDocRef);
+        
+        // Si no existe por UID, buscar por email
+        if (!userDoc.exists() && firebaseUser.email) {
+          const usersRef = collection(this.firestore, 'usuarios');
+          const q = query(usersRef, where('email', '==', firebaseUser.email));
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            const docSnap = querySnapshot.docs[0];
+            userDocRef = doc(this.firestore, `usuarios/${docSnap.id}`);
+            userDoc = docSnap;
+          }
+        }
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data() as Usuario;
+          // Only update if emailVerificado is false in Firestore
+          if (!userData.emailVerificado) {
+            await updateDoc(userDocRef, {
+              emailVerificado: true
+            });
+          }
+        }
+      }
+    });
+  }
+
   user$: Observable<Usuario | null> = authState(this.auth).pipe(
     switchMap((firebaseUser: User | null) => {
       if (!firebaseUser) {
@@ -41,16 +79,35 @@ export class AuthService {
         return of(null);
       }
 
+      // Intentar buscar por UID primero
       const userDocRef = doc(this.firestore, `usuarios/${firebaseUser.uid}`);
       return from(getDoc(userDocRef)).pipe(
-        map(docSnap => {
+        switchMap(docSnap => {
           if (docSnap.exists()) {
             const userData = docSnap.data() as Usuario;
             this.currentUser.set(userData);
-            return userData;
+            return of(userData);
           }
+          
+          // Si no existe, buscar por email
+          if (firebaseUser.email) {
+            const usersRef = collection(this.firestore, 'usuarios');
+            const q = query(usersRef, where('email', '==', firebaseUser.email));
+            return from(getDocs(q)).pipe(
+              map(querySnapshot => {
+                if (!querySnapshot.empty) {
+                  const userData = querySnapshot.docs[0].data() as Usuario;
+                  this.currentUser.set(userData);
+                  return userData;
+                }
+                this.currentUser.set(null);
+                return null;
+              })
+            );
+          }
+          
           this.currentUser.set(null);
-          return null;
+          return of(null);
         })
       );
     })
@@ -127,8 +184,15 @@ export class AuthService {
 
       await this.notificationService.showSuccess(
         'Registro exitoso',
-        'Te hemos enviado un email de verificación.'
+        'Te hemos enviado un email de verificación. Verifica tu cuenta antes de iniciar sesión.'
       );
+
+      // Esperar un momento para que el usuario vea el mensaje
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Cerrar sesión y redirigir al login
+      await this.logout();
+      this.router.navigate(['/login']);
 
       return nuevoUsuario;
     } catch (error: any) {
@@ -155,11 +219,31 @@ export class AuthService {
 
       const user = userCredential.user;
       console.log('UID del usuario en Firebase Auth:', user.uid);
-      const userDocRef = doc(this.firestore, `usuarios/${user.uid}`);
-      const userDoc = await getDoc(userDocRef);
+      console.log('Email del usuario:', user.email);
+      
+      // Recargar el usuario para obtener el estado más reciente de emailVerified
+      await user.reload();
+      
+      // Intentar buscar por UID primero
+      let userDocRef = doc(this.firestore, `usuarios/${user.uid}`);
+      let userDoc = await getDoc(userDocRef);
 
+      // Si no existe por UID, buscar por email en la colección
       if (!userDoc.exists()) {
-        throw new Error('Usuario no encontrado.');
+        console.log('Usuario no encontrado por UID, buscando por email...');
+        const usersRef = collection(this.firestore, 'usuarios');
+        const q = query(usersRef, where('email', '==', email));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          throw new Error('Usuario no encontrado.');
+        }
+        
+        // Tomar el primer documento encontrado
+        const docSnap = querySnapshot.docs[0];
+        userDocRef = doc(this.firestore, `usuarios/${docSnap.id}`);
+        userDoc = docSnap;
+        console.log('Usuario encontrado por email, documento ID:', docSnap.id);
       }
 
       const userData = userDoc.data() as Usuario;
@@ -169,18 +253,47 @@ export class AuthService {
         throw new Error('Tu cuenta ha sido deshabilitada.');
       }
 
+      // Sincronizar emailVerificado con Firebase Auth
+      if (user.emailVerified && !userData.emailVerificado) {
+        await updateDoc(userDocRef, {
+          emailVerificado: true
+        });
+        userData.emailVerificado = true;
+      }
+      
+      // También sincronizar en sentido contrario: si Firestore dice true pero Auth dice false,
+      // esto puede ser útil para desarrollo/usuarios de prueba
+      if (userData.emailVerificado && !user.emailVerified) {
+        // No podemos cambiar user.emailVerified directamente, pero usamos el valor de Firestore
+        // para permitir el login (verificado abajo)
+      }
+      
       // Debug temporal
       console.log('Email verificado en Firebase Auth:', user.emailVerified);
       console.log('Role del usuario:', userData.role);
+      console.log('Email verificado en Firestore:', userData.emailVerificado);
+      console.log('Aprobado:', userData.aprobado);
       
-      if (userData.role === 'paciente' && !user.emailVerified) {
+      // Verificar email para pacientes - aceptar si está verificado en Auth O en Firestore
+      const emailVerificado = user.emailVerified || userData.emailVerificado === true;
+      if (userData.role === 'paciente' && !emailVerificado) {
         await this.logout();
-        throw new Error('Debes verificar tu email.');
+        throw new Error('Debes verificar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.');
       }
 
-      if (userData.role === 'especialista' && !userData.aprobado) {
-        await this.logout();
-        throw new Error('Tu cuenta está pendiente de aprobación.');
+      // Verificar aprobación para especialistas (requieren aprobación del admin)
+      if (userData.role === 'especialista') {
+        // Para especialistas también aceptamos Firestore o Firebase Auth
+        const emailVerificadoEspecialista = user.emailVerified || userData.emailVerificado === true;
+        if (!emailVerificadoEspecialista) {
+          await this.logout();
+          throw new Error('Debes verificar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.');
+        }
+        
+        if (!userData.aprobado) {
+          await this.logout();
+          throw new Error('Tu cuenta está pendiente de aprobación del administrador. Debes aguardar a que tu cuenta sea aprobada antes de poder iniciar sesión.');
+        }
       }
 
       await updateDoc(userDocRef, {
@@ -225,10 +338,14 @@ export class AuthService {
   private redirigirSegunRol(role: TipoUsuario): void {
     switch (role) {
       case 'paciente':
-        this.router.navigate(['/paciente/mis-turnos']);
+        // TODO: Implementar módulo de paciente
+        // this.router.navigate(['/paciente/mis-turnos']);
+        this.router.navigate(['/']);
         break;
       case 'especialista':
-        this.router.navigate(['/especialista/mis-turnos']);
+        // TODO: Implementar módulo de especialista
+        // this.router.navigate(['/especialista/mis-turnos']);
+        this.router.navigate(['/']);
         break;
       case 'administrador':
         this.router.navigate(['/admin/usuarios']);
@@ -236,15 +353,104 @@ export class AuthService {
     }
   }
 
-  async loginRapido(tipoUsuario: 'paciente' | 'especialista' | 'admin'): Promise<void> {
-    const credenciales = {
-      paciente: { email: 'paciente@test.com', password: 'Test123!' },
-      especialista: { email: 'especialista@test.com', password: 'Test123!' },
-      admin: { email: 'admin@test.com', password: 'Test123!' }
-    };
+  // Usuarios de prueba para accesos rápidos
+  usuariosPrueba = {
+    paciente1: { 
+      email: 'paciente1@test.com', 
+      password: 'Test123!',
+      nombre: 'Juan',
+      apellido: 'Pérez',
+      imagenPerfil: 'https://via.placeholder.com/150?text=Paciente1'
+    },
+    paciente2: { 
+      email: 'paciente2@test.com', 
+      password: 'Test123!',
+      nombre: 'María',
+      apellido: 'García',
+      imagenPerfil: 'https://via.placeholder.com/150?text=Paciente2'
+    },
+    paciente3: { 
+      email: 'paciente3@test.com', 
+      password: 'Test123!',
+      nombre: 'Carlos',
+      apellido: 'López',
+      imagenPerfil: 'https://via.placeholder.com/150?text=Paciente3'
+    },
+    especialista1: { 
+      email: 'especialista1@test.com', 
+      password: 'Test123!',
+      nombre: 'Dr. Ana',
+      apellido: 'Martínez',
+      imagenPerfil: 'https://via.placeholder.com/150?text=Especialista1'
+    },
+    especialista2: { 
+      email: 'especialista2@test.com', 
+      password: 'Test123!',
+      nombre: 'Dr. Luis',
+      apellido: 'Rodríguez',
+      imagenPerfil: 'https://via.placeholder.com/150?text=Especialista2'
+    },
+    admin: { 
+      email: 'admin@test.com', 
+      password: 'Test123!',
+      nombre: 'Admin',
+      apellido: 'Sistema',
+      imagenPerfil: 'https://via.placeholder.com/150?text=Admin'
+    }
+  } as const;
 
-    const cred = credenciales[tipoUsuario];
+  async loginRapido(usuario: 'paciente1' | 'paciente2' | 'paciente3' | 'especialista1' | 'especialista2' | 'admin'): Promise<void> {
+    const cred = this.usuariosPrueba[usuario];
     await this.login(cred.email, cred.password);
+  }
+
+  getUsuariosPrueba() {
+    return this.usuariosPrueba;
+  }
+
+  // Obtener información actualizada de usuarios de prueba desde Firestore
+  async getUsuariosPruebaConImagenes(): Promise<any> {
+    // Asegurar que Firestore está disponible
+    if (!this.firestore) {
+      console.warn('Firestore no está disponible');
+      return this.usuariosPrueba;
+    }
+    
+    const usuariosActualizados: any = {};
+    
+    for (const key in this.usuariosPrueba) {
+      const usuarioOriginal = this.usuariosPrueba[key as keyof typeof this.usuariosPrueba];
+      usuariosActualizados[key] = { ...usuarioOriginal };
+      
+      try {
+        // Buscar por email - usar collection y query con el firestore inyectado
+        const usersRef = collection(this.firestore, 'usuarios');
+        const q = query(usersRef, where('email', '==', usuarioOriginal.email));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data() as Usuario;
+          
+          // Actualizar con imagen real si existe
+          if (userData.imagenPerfil && userData.imagenPerfil.trim() !== '') {
+            usuariosActualizados[key].imagenPerfil = userData.imagenPerfil;
+            if (key === 'admin') {
+              console.log(`✅ Admin - Imagen cargada desde Firestore: ${userData.imagenPerfil.substring(0, 60)}...`);
+            }
+          }
+          
+          if (userData.nombre && userData.apellido) {
+            usuariosActualizados[key].nombre = userData.nombre;
+            usuariosActualizados[key].apellido = userData.apellido;
+          }
+        }
+      } catch (error) {
+        // Si falla, mantener los valores por defecto
+        console.warn(`No se pudo obtener información del usuario ${usuarioOriginal.email}:`, error);
+      }
+    }
+    
+    return usuariosActualizados;
   }
 
 

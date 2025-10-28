@@ -47,7 +47,14 @@ export class UserService {
 
     return from(getDocs(q)).pipe(
       map(querySnapshot => {
-        return querySnapshot.docs.map(doc => doc.data() as Usuario);
+        return querySnapshot.docs.map(docSnap => {
+          const data = docSnap.data() as Usuario;
+          // Asegurar que el UID esté presente (puede venir del ID del documento o del campo)
+          if (!data.uid) {
+            data.uid = docSnap.id;
+          }
+          return data;
+        });
       })
     );
   }
@@ -61,13 +68,40 @@ export class UserService {
 
     return from(getDocs(q)).pipe(
       map(querySnapshot => {
-        return querySnapshot.docs.map(doc => doc.data() as Usuario);
+        return querySnapshot.docs.map(docSnap => {
+          const data = docSnap.data() as Usuario;
+          // Asegurar que el UID esté presente
+          if (!data.uid) {
+            data.uid = docSnap.id;
+          }
+          return data;
+        });
       })
     );
   }
 
   async aprobarEspecialista(uid: string): Promise<void> {
-    const userDocRef = doc(this.firestore, `usuarios/${uid}`);
+    // Intentar primero con el UID como ID del documento
+    let userDocRef = doc(this.firestore, `usuarios/${uid}`);
+    let userDoc = await getDoc(userDocRef);
+    
+    // Si no existe, buscar por email usando el UID (si el UID está en el campo email)
+    // O buscar por el campo uid en los documentos
+    if (!userDoc.exists()) {
+      const q = query(
+        this.usuariosCollection,
+        where('uid', '==', uid)
+      );
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const docSnap = querySnapshot.docs[0];
+        userDocRef = doc(this.firestore, `usuarios/${docSnap.id}`);
+      } else {
+        throw new Error('Usuario no encontrado');
+      }
+    }
+    
     await updateDoc(userDocRef, {
       aprobado: true,
       fechaModificacion: serverTimestamp()
