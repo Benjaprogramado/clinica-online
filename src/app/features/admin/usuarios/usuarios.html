@@ -1,6 +1,12 @@
 <div class="usuarios-admin">
   <div class="header">
-    <h1>Gestión de Usuarios</h1>
+    <div class="header-title">
+      <h1>Gestión de Usuarios</h1>
+      <button class="btn-nuevo-usuario" (click)="toggleFormulario()">
+        <i class="pi pi-plus"></i>
+        {{ mostrarFormulario() ? 'Cancelar' : 'Nuevo Usuario' }}
+      </button>
+    </div>
     
     <div class="filtros">
       <div class="filtro-group">
@@ -22,6 +28,13 @@
         </select>
       </div>
     </div>
+  </div>
+
+  <!-- Formulario de nuevo usuario -->
+  <div *ngIf="mostrarFormulario()">
+    <app-form-usuario
+      (usuarioCreado)="onUsuarioCreado()"
+    ></app-form-usuario>
   </div>
 
   <div class="pendientes-section" *ngIf="getEspecialistasPendientes().length > 0">

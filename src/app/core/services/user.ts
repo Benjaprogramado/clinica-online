@@ -109,7 +109,26 @@ export class UserService {
   }
 
   async habilitarUsuario(uid: string): Promise<void> {
-    const userDocRef = doc(this.firestore, `usuarios/${uid}`);
+    // Intentar primero con el UID como ID del documento
+    let userDocRef = doc(this.firestore, `usuarios/${uid}`);
+    let userDoc = await getDoc(userDocRef);
+    
+    // Si no existe, buscar por el campo uid en los documentos
+    if (!userDoc.exists()) {
+      const q = query(
+        this.usuariosCollection,
+        where('uid', '==', uid)
+      );
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const docSnap = querySnapshot.docs[0];
+        userDocRef = doc(this.firestore, `usuarios/${docSnap.id}`);
+      } else {
+        throw new Error('Usuario no encontrado');
+      }
+    }
+    
     await updateDoc(userDocRef, {
       activo: true,
       fechaModificacion: serverTimestamp()
@@ -117,7 +136,26 @@ export class UserService {
   }
 
   async deshabilitarUsuario(uid: string): Promise<void> {
-    const userDocRef = doc(this.firestore, `usuarios/${uid}`);
+    // Intentar primero con el UID como ID del documento
+    let userDocRef = doc(this.firestore, `usuarios/${uid}`);
+    let userDoc = await getDoc(userDocRef);
+    
+    // Si no existe, buscar por el campo uid en los documentos
+    if (!userDoc.exists()) {
+      const q = query(
+        this.usuariosCollection,
+        where('uid', '==', uid)
+      );
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const docSnap = querySnapshot.docs[0];
+        userDocRef = doc(this.firestore, `usuarios/${docSnap.id}`);
+      } else {
+        throw new Error('Usuario no encontrado');
+      }
+    }
+    
     await updateDoc(userDocRef, {
       activo: false,
       fechaModificacion: serverTimestamp()

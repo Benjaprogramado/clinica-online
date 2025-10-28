@@ -1,1 +1,249 @@
-<p>form-usuario works!</p>
+<div class="form-usuario-container">
+  <div class="form-header">
+    <h2>Crear Nuevo Usuario</h2>
+    <button type="button" class="btn-close" (click)="cerrar()" title="Cerrar" [disabled]="cargando()">
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
+
+  <form [formGroup]="registroForm" (ngSubmit)="onSubmit()" class="form-usuario">
+    
+    <!-- Selección de tipo de usuario -->
+    <div class="form-group">
+      <label for="tipoUsuario">Tipo de Usuario *</label>
+      <select id="tipoUsuario" formControlName="tipoUsuario" class="form-select">
+        <option value="paciente">Paciente</option>
+        <option value="especialista">Especialista</option>
+        <option value="administrador">Administrador</option>
+      </select>
+    </div>
+
+    <!-- Nombre -->
+    <div class="form-group">
+      <label for="nombre">Nombre *</label>
+      <input
+        type="text"
+        id="nombre"
+        formControlName="nombre"
+        [class.invalid]="isFieldInvalid('nombre')"
+        placeholder="Ingresa el nombre"
+      >
+      <div class="error-message" *ngIf="isFieldInvalid('nombre')">
+        El nombre es requerido (mínimo 2 caracteres)
+      </div>
+    </div>
+
+    <!-- Apellido -->
+    <div class="form-group">
+      <label for="apellido">Apellido *</label>
+      <input
+        type="text"
+        id="apellido"
+        formControlName="apellido"
+        [class.invalid]="isFieldInvalid('apellido')"
+        placeholder="Ingresa el apellido"
+      >
+      <div class="error-message" *ngIf="isFieldInvalid('apellido')">
+        El apellido es requerido (mínimo 2 caracteres)
+      </div>
+    </div>
+
+    <!-- Edad -->
+    <div class="form-group">
+      <label for="edad">Edad *</label>
+      <input
+        type="number"
+        id="edad"
+        formControlName="edad"
+        [class.invalid]="isFieldInvalid('edad')"
+        [placeholder]="tipoUsuario() === 'especialista' ? 'Entre 18 y 80 años' : 'Entre 1 y 120 años'"
+        [min]="tipoUsuario() === 'especialista' ? 18 : 1"
+        [max]="tipoUsuario() === 'especialista' ? 80 : 120"
+      >
+      <div class="error-message" *ngIf="isFieldInvalid('edad')">
+        <span *ngIf="tipoUsuario() === 'especialista'">La edad debe estar entre 18 y 80 años</span>
+        <span *ngIf="tipoUsuario() !== 'especialista'">La edad debe estar entre 1 y 120 años</span>
+      </div>
+    </div>
+
+    <!-- DNI -->
+    <div class="form-group">
+      <label for="dni">DNI *</label>
+      <input
+        type="text"
+        id="dni"
+        formControlName="dni"
+        [class.invalid]="isFieldInvalid('dni')"
+        placeholder="DNI sin puntos"
+        maxlength="8"
+      >
+      <div class="error-message" *ngIf="isFieldInvalid('dni')">
+        El DNI debe tener entre 7 y 8 dígitos
+      </div>
+    </div>
+
+    <!-- Obra Social (solo para pacientes) -->
+    <div class="form-group" *ngIf="tipoUsuario() === 'paciente'">
+      <label for="obraSocial">Obra Social *</label>
+      <select
+        id="obraSocial"
+        formControlName="obraSocial"
+        [class.invalid]="isFieldInvalid('obraSocial')"
+      >
+        <option value="">Selecciona una obra social</option>
+        <option *ngFor="let obra of obrasSociales" [value]="obra">{{ obra }}</option>
+      </select>
+      <div class="error-message" *ngIf="isFieldInvalid('obraSocial')">
+        La obra social es requerida
+      </div>
+    </div>
+
+    <!-- Especialidades (solo para especialistas) -->
+    <div class="especialidades-section" *ngIf="tipoUsuario() === 'especialista'">
+      <label>Especialidades *</label>
+      <div class="especialidades-grid">
+        <div
+          *ngFor="let esp of especialidadesDisponibles"
+          class="especialidad-item"
+          [class.selected]="especialidadesSeleccionadas.includes(esp)"
+          (click)="toggleEspecialidad(esp)"
+        >
+          {{ esp }}
+        </div>
+      </div>
+      
+      <div class="nueva-especialidad">
+        <input
+          type="text"
+          [(ngModel)]="nuevaEspecialidad"
+          [ngModelOptions]="{standalone: true}"
+          placeholder="Agregar nueva especialidad"
+          (keyup.enter)="agregarNuevaEspecialidad()"
+        >
+        <button type="button" (click)="agregarNuevaEspecialidad()" [disabled]="!nuevaEspecialidad.trim()">
+          <i class="pi pi-plus"></i> Agregar
+        </button>
+      </div>
+      <div class="error-message" *ngIf="especialidadesSeleccionadas.length === 0 && registroForm.touched">
+        Debes seleccionar al menos una especialidad
+      </div>
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <label for="email">Email *</label>
+      <input
+        type="email"
+        id="email"
+        formControlName="email"
+        [class.invalid]="isFieldInvalid('email')"
+        placeholder="usuario@email.com"
+      >
+      <div class="error-message" *ngIf="isFieldInvalid('email')">
+        Ingresa un email válido
+      </div>
+    </div>
+
+    <!-- Contraseña -->
+    <div class="form-group">
+      <label for="password">Contraseña *</label>
+      <input
+        type="password"
+        id="password"
+        formControlName="password"
+        [class.invalid]="isFieldInvalid('password')"
+        placeholder="Mínimo 6 caracteres"
+      >
+      <div class="error-message" *ngIf="isFieldInvalid('password')">
+        La contraseña debe tener al menos 6 caracteres
+      </div>
+    </div>
+
+    <!-- Confirmar Contraseña -->
+    <div class="form-group">
+      <label for="confirmarPassword">Confirmar Contraseña *</label>
+      <input
+        type="password"
+        id="confirmarPassword"
+        formControlName="confirmarPassword"
+        [class.invalid]="isFieldInvalid('confirmarPassword')"
+        placeholder="Repite la contraseña"
+      >
+      <div class="error-message" *ngIf="isFieldInvalid('confirmarPassword')">
+        Las contraseñas no coinciden
+      </div>
+    </div>
+
+    <!-- Imágenes de perfil para Paciente -->
+    <div *ngIf="tipoUsuario() === 'paciente'">
+      <div class="imagen-upload">
+        <label class="upload-label">
+          <i class="pi pi-image"></i>
+          <span>Imagen de perfil 1 *</span>
+          <input
+            type="file"
+            accept="image/*"
+            (change)="onImagenSeleccionada($event, 1)"
+          >
+        </label>
+        <div class="preview" *ngIf="imagen1Preview()">
+          <img [src]="imagen1Preview()" alt="Preview 1">
+        </div>
+      </div>
+
+      <div class="imagen-upload">
+        <label class="upload-label">
+          <i class="pi pi-image"></i>
+          <span>Imagen de perfil 2 *</span>
+          <input
+            type="file"
+            accept="image/*"
+            (change)="onImagenSeleccionada($event, 2)"
+          >
+        </label>
+        <div class="preview" *ngIf="imagen2Preview()">
+          <img [src]="imagen2Preview()" alt="Preview 2">
+        </div>
+      </div>
+    </div>
+
+    <!-- Imagen de perfil para Especialista o Administrador -->
+    <div *ngIf="tipoUsuario() !== 'paciente'" class="imagen-upload">
+      <label class="upload-label">
+        <i class="pi pi-image"></i>
+        <span>Imagen de perfil *</span>
+        <input
+          type="file"
+          accept="image/*"
+          (change)="onImagenSeleccionada($event)"
+        >
+      </label>
+      <div class="preview" *ngIf="imagenPreview()">
+        <img [src]="imagenPreview()" alt="Preview">
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="form-actions">
+      <button
+        type="button"
+        class="btn-cancelar"
+        (click)="cerrar()"
+        [disabled]="cargando()"
+      >
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        class="btn-submit"
+        [disabled]="cargando() || registroForm.invalid || (tipoUsuario() === 'especialista' && especialidadesSeleccionadas.length === 0)"
+      >
+        <span *ngIf="!cargando()">Crear Usuario</span>
+        <span *ngIf="cargando()">
+          <i class="pi pi-spin pi-spinner"></i> Creando...
+        </span>
+      </button>
+    </div>
+
+  </form>
+</div>

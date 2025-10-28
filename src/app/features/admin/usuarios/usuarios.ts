@@ -6,11 +6,12 @@ import { UserService } from '../../../core/services/user';
 import { Usuario } from '../../../core/models/user.model';
 import { AuthService } from '../../../core/services/auth';
 import { NotificationService } from '../../../core/services/notification';
+import { FormUsuario } from './form-usuario/form-usuario';
 
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FormUsuario],
   templateUrl: './usuarios.html',
   styleUrl: './usuarios.scss'
 })
@@ -24,6 +25,7 @@ export class Usuarios implements OnInit {
   cargando = signal(false);
   filtroRol = signal<'todos' | 'paciente' | 'especialista' | 'administrador'>('todos');
   filtroAprobacion = signal<'todos' | 'aprobados' | 'pendientes'>('todos');
+  mostrarFormulario = signal(false);
 
   ngOnInit(): void {
     this.cargarUsuarios();
@@ -160,5 +162,14 @@ export class Usuarios implements OnInit {
 
   getEspecialistasPendientes(): Usuario[] {
     return this.usuarios().filter(u => u.role === 'especialista' && !u.aprobado);
+  }
+
+  toggleFormulario(): void {
+    this.mostrarFormulario.set(!this.mostrarFormulario());
+  }
+
+  onUsuarioCreado(): void {
+    this.mostrarFormulario.set(false);
+    this.cargarUsuarios();
   }
 }

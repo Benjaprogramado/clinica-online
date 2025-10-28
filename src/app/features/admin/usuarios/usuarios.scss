@@ -7,11 +7,44 @@
   .header {
     margin-bottom: 2rem;
     
-    h1 {
-      color: #00adb5;
+    .header-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 1.5rem;
-      font-size: 2rem;
-      font-weight: 600;
+      flex-wrap: wrap;
+      gap: 1rem;
+
+      h1 {
+        color: #00adb5;
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 600;
+      }
+
+      .btn-nuevo-usuario {
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #00adb5 0%, #00d4ff 100%);
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0, 173, 181, 0.4);
+        }
+
+        i {
+          font-size: 1.1rem;
+        }
+      }
     }
     
     .filtros {

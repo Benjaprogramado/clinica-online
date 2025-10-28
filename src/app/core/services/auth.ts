@@ -209,6 +209,98 @@ export class AuthService {
     }
   }
 
+  /**
+   * Método para crear usuarios desde el panel de administración
+   * No cierra sesión ni redirige, solo crea el usuario
+   */
+  async crearUsuarioDesdeAdmin(
+    email: string,
+    password: string,
+    userData: Partial<Usuario>
+  ): Promise<Usuario> {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        this.auth,
+        email,
+        password
+      );
+
+      const user = userCredential.user;
+
+      await updateProfile(user, {
+        displayName: `${userData.nombre} ${userData.apellido}`,
+        photoURL: userData.imagenPerfil || ''
+      });
+
+      // Para administradores, aprobado es true por defecto
+      const aprobado = userData.role === 'especialista' ? (userData.aprobado ?? false) : true;
+
+      const nuevoUsuario: Usuario = {
+        uid: user.uid,
+        email: user.email!,
+        nombre: userData.nombre!,
+        apellido: userData.apellido!,
+        edad: userData.edad!,
+        dni: userData.dni!,
+        role: userData.role!,
+        imagenPerfil: userData.imagenPerfil || '',
+        imagenPerfil2: userData.imagenPerfil2,
+        obraSocial: userData.obraSocial,
+        especialidades: userData.especialidades,
+        aprobado: aprobado,
+        emailVerificado: false, // El usuario deberá verificar su email
+        activo: true,
+        fechaRegistro: new Date(),
+      };
+
+      // Filtrar campos undefined para Firestore
+      const dataToSave: any = {
+        uid: nuevoUsuario.uid,
+        email: nuevoUsuario.email,
+        nombre: nuevoUsuario.nombre,
+        apellido: nuevoUsuario.apellido,
+        edad: nuevoUsuario.edad,
+        dni: nuevoUsuario.dni,
+        role: nuevoUsuario.role,
+        imagenPerfil: nuevoUsuario.imagenPerfil,
+        aprobado: nuevoUsuario.aprobado,
+        emailVerificado: nuevoUsuario.emailVerificado,
+        activo: nuevoUsuario.activo,
+        fechaRegistro: serverTimestamp()
+      };
+
+      // Agregar campos opcionales solo si existen
+      if (userData.imagenPerfil2) {
+        dataToSave.imagenPerfil2 = userData.imagenPerfil2;
+      }
+      if (userData.obraSocial) {
+        dataToSave.obraSocial = userData.obraSocial;
+      }
+      if (userData.especialidades && userData.especialidades.length > 0) {
+        dataToSave.especialidades = userData.especialidades;
+      }
+
+      const userDocRef = doc(this.firestore, `usuarios/${user.uid}`);
+      await setDoc(userDocRef, dataToSave);
+
+      // Enviar email de verificación
+      await sendEmailVerification(user);
+
+      return nuevoUsuario;
+    } catch (error: any) {
+      let mensaje = 'Ocurrió un error al crear el usuario.';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        mensaje = 'El email ya está registrado.';
+      } else if (error.code === 'auth/weak-password') {
+        mensaje = 'La contraseña debe tener al menos 6 caracteres.';
+      }
+
+      await this.notificationService.showError('Error al crear usuario', mensaje);
+      throw error;
+    }
+  }
+
   async login(email: string, password: string): Promise<void> {
     try {
       const userCredential = await signInWithEmailAndPassword(
