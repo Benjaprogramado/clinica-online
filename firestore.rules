@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // REGLAS ABIERTAS PARA DESARROLLO - PERMITIR TODO A CUALQUIERA
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true; // Permitir lectura pública (solo desarrollo)
+    }
+  }
+}
+
