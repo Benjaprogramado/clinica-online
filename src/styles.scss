@@ -97,3 +97,71 @@ textarea {
     background: $primary-light;
   }
 }
+
+// Estilos para SweetAlert2 - Espaciado entre botones
+.swal2-popup .swal2-actions {
+  gap: 1.5rem !important;
+  margin-top: 1.5rem !important;
+  display: flex !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+}
+
+.swal2-popup .swal2-actions button {
+  margin: 0 !important;
+  margin-left: 0.75rem !important;
+  margin-right: 0.75rem !important;
+}
+
+.swal2-popup .swal2-actions .swal2-confirm {
+  margin-right: 0.75rem !important;
+  margin-left: 0 !important;
+}
+
+.swal2-popup .swal2-actions .swal2-cancel {
+  margin-left: 0.75rem !important;
+  margin-right: 0 !important;
+}
+
+// Clases personalizadas también
+.swal-confirm-btn {
+  margin-right: 0.75rem !important;
+}
+
+.swal-cancel-btn {
+  margin-left: 0.75rem !important;
+}
+
+// Clase específica para acciones espaciadas
+.swal-actions-spaced {
+  gap: 1.5rem !important;
+  
+  button {
+    margin-left: 0.75rem !important;
+    margin-right: 0.75rem !important;
+    
+    &:first-child {
+      margin-left: 0 !important;
+      margin-right: 0.75rem !important;
+    }
+    
+    &:last-child {
+      margin-right: 0 !important;
+      margin-left: 0.75rem !important;
+    }
+  }
+}
+
+// Popup oscuro para SweetAlert
+.swal-dark-popup {
+  background: #1a1a2e !important;
+  color: #eee !important;
+  
+  .swal2-title {
+    color: #eee !important;
+  }
+  
+  .swal2-content {
+    color: #bbb !important;
+  }
+}

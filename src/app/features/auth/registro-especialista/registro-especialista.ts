@@ -5,11 +5,12 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 import { StorageService } from '../../../core/services/storage';
 import { EspecialidadesService } from '../../../core/services/especialidades';
+import { RecaptchaComponent } from '../../../shared/components/recaptcha/recaptcha';
 
 @Component({
   selector: 'app-registro-especialista',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RecaptchaComponent],
   templateUrl: './registro-especialista.html',
   styleUrl: './registro-especialista.scss'
 })
@@ -24,6 +25,7 @@ export class RegistroEspecialistaComponent implements OnInit {
   cargando = signal(false);
   imagenPreview = signal<string | null>(null);
   imagenFile: File | null = null;
+  captchaValido = signal(false);
 
   especialidadesDisponibles: string[] = [];
   especialidadesSeleccionadas: string[] = [];
@@ -132,12 +134,21 @@ export class RegistroEspecialistaComponent implements OnInit {
     }
   }
 
+  onCaptchaValidado(valido: boolean) {
+    this.captchaValido.set(valido);
+  }
+
   async onSubmit(): Promise<void> {
     if (this.registroForm.invalid || this.especialidadesSeleccionadas.length === 0) {
       this.registroForm.markAllAsTouched();
       if (this.especialidadesSeleccionadas.length === 0) {
         alert('Debes seleccionar al menos una especialidad');
       }
+      return;
+    }
+
+    if (!this.captchaValido()) {
+      alert('Debes completar la verificación reCAPTCHA');
       return;
     }
 

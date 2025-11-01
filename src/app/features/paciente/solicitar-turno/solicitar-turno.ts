@@ -10,12 +10,11 @@ import { UserService } from '../../../core/services/user';
 import { Usuario } from '../../../core/models/user.model';
 import { DisponibilidadEspecialista } from '../../../core/models/turno.model';
 import { LoadingService } from '../../../core/services/loading';
-import { CaptchaComponent } from '../../../shared/components/captcha/captcha';
 
 @Component({
   selector: 'app-solicitar-turno',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CaptchaComponent, DatePipe],
+  imports: [CommonModule, ReactiveFormsModule, DatePipe],
   templateUrl: './solicitar-turno.html',
   styleUrl: './solicitar-turno.scss'
 })
@@ -38,7 +37,6 @@ export class SolicitarTurnoComponent implements OnInit {
   
   especialistaSeleccionado = signal<Usuario | null>(null);
   fechaSeleccionada = signal<Date | null>(null);
-  captchaValido = signal(false);
 
   constructor() {
     this.formulario = this.fb.group({
@@ -234,16 +232,8 @@ export class SolicitarTurnoComponent implements OnInit {
     this.onFechaSeleccionada();
   }
 
-  onCaptchaValidado(valido: boolean) {
-    this.captchaValido.set(valido);
-  }
-
   async onSubmit() {
     if (this.formulario.invalid) {
-      return;
-    }
-
-    if (!this.captchaValido()) {
       return;
     }
 

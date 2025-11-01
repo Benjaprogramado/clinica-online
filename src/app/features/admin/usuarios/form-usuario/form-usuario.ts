@@ -6,11 +6,12 @@ import { StorageService } from '../../../../core/services/storage';
 import { EspecialidadesService } from '../../../../core/services/especialidades';
 import { NotificationService } from '../../../../core/services/notification';
 import { TipoUsuario, Usuario } from '../../../../core/models/user.model';
+import { RecaptchaComponent } from '../../../../shared/components/recaptcha/recaptcha';
 
 @Component({
   selector: 'app-form-usuario',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RecaptchaComponent],
   templateUrl: './form-usuario.html',
   styleUrl: './form-usuario.scss'
 })
@@ -45,6 +46,9 @@ export class FormUsuario implements OnInit {
 
   // Obra social para pacientes
   obrasSociales = ['OSDE', 'Swiss Medical', 'Galeno', 'Medifé', 'Omint', 'Otra'];
+  
+  // reCAPTCHA
+  captchaValido = signal(false);
 
   ngOnInit(): void {
     this.inicializarFormulario();
@@ -189,9 +193,21 @@ export class FormUsuario implements OnInit {
       .join(' ');
   }
 
+  onCaptchaValidado(valido: boolean) {
+    this.captchaValido.set(valido);
+  }
+
   async onSubmit(): Promise<void> {
     if (this.registroForm.invalid) {
       this.registroForm.markAllAsTouched();
+      return;
+    }
+
+    if (!this.captchaValido()) {
+      await this.notificationService.showError(
+        'Verificación requerida',
+        'Debes completar la verificación reCAPTCHA antes de continuar.'
+      );
       return;
     }
 
@@ -354,6 +370,7 @@ export class FormUsuario implements OnInit {
     this.imagenFile = null;
     this.especialidadesSeleccionadas = [];
     this.nuevaEspecialidad = '';
+    this.captchaValido.set(false);
     this.actualizarValidaciones();
   }
 

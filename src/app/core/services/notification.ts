@@ -9,12 +9,14 @@ export class NotificationService {
   private defaultConfig = {
     customClass: {
       popup: 'swal-dark-popup',
-      confirmButton: 'btn btn-primary',
-      cancelButton: 'btn btn-secondary'
+      confirmButton: 'btn btn-primary swal-confirm-btn',
+      cancelButton: 'btn btn-secondary swal-cancel-btn'
     },
     buttonsStyling: false,
     background: '#1a1a2e',
-    color: '#eee'
+    color: '#eee',
+    confirmButtonColor: '#00adb5',
+    cancelButtonColor: '#6c757d'
   };
 
   async showSuccess(title: string, text?: string): Promise<void> {
@@ -70,7 +72,11 @@ export class NotificationService {
       text,
       showCancelButton: true,
       confirmButtonText,
-      cancelButtonText
+      cancelButtonText,
+      customClass: {
+        ...this.defaultConfig.customClass,
+        actions: 'swal-actions-spaced'
+      }
     });
 
     return result.isConfirmed;

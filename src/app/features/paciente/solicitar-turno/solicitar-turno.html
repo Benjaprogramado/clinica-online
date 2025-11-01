@@ -153,11 +153,6 @@
                   placeholder="Agrega algún comentario sobre tu consulta..."></textarea>
               </div>
 
-              <!-- Captcha -->
-              <div class="mb-4">
-                <app-captcha (captchaValidado)="onCaptchaValidado($event)"></app-captcha>
-              </div>
-
               <!-- Botones -->
               <div class="d-flex gap-2 justify-content-end">
                 <button
@@ -169,7 +164,7 @@
                 <button
                   type="submit"
                   class="btn btn-primary"
-                  [disabled]="formulario.invalid || !captchaValido()">
+                  [disabled]="formulario.invalid">
                   <i class="pi pi-check me-2"></i>
                   Solicitar Turno
                 </button>

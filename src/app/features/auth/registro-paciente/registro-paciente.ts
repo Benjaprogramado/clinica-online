@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 import { StorageService } from '../../../core/services/storage';
+import { RecaptchaComponent } from '../../../shared/components/recaptcha/recaptcha';
 
 @Component({
   selector: 'app-registro-paciente',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RecaptchaComponent],
   templateUrl: './registro-paciente.html',
   styleUrl: './registro-paciente.scss'
 })
@@ -24,6 +25,7 @@ export class RegistroPacienteComponent {
   imagen2Preview = signal<string | null>(null);
   imagen1File: File | null = null;
   imagen2File: File | null = null;
+  captchaValido = signal(false);
 
   constructor() {
     this.registroForm = this.fb.group({
@@ -69,9 +71,18 @@ export class RegistroPacienteComponent {
     }
   }
 
+  onCaptchaValidado(valido: boolean) {
+    this.captchaValido.set(valido);
+  }
+
   async onSubmit(): Promise<void> {
     if (this.registroForm.invalid) {
       this.registroForm.markAllAsTouched();
+      return;
+    }
+
+    if (!this.captchaValido()) {
+      alert('Debes completar la verificación reCAPTCHA');
       return;
     }
 

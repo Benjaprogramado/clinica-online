@@ -1,0 +1,26 @@
+.recaptcha-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 1rem 0;
+
+  .recaptcha-wrapper {
+    display: inline-block;
+    
+    // Ajustar estilos del widget de reCAPTCHA
+    :host ::ng-deep .g-recaptcha {
+      transform: scale(0.9);
+      transform-origin: 0 0;
+      
+      @media (max-width: 768px) {
+        transform: scale(0.85);
+      }
+    }
+  }
+
+  .recaptcha-loading {
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+}
+

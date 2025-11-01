@@ -148,10 +148,16 @@
       </div>
     </div>
 
+    <!-- reCAPTCHA -->
+    <div class="form-group">
+      <label class="form-label">Verificación de seguridad <span class="text-danger">*</span></label>
+      <app-recaptcha (captchaValidado)="onCaptchaValidado($event)"></app-recaptcha>
+    </div>
+
     <button
       type="submit"
       class="btn-submit"
-      [disabled]="cargando() || registroForm.invalid || especialidadesSeleccionadas.length === 0"
+      [disabled]="cargando() || registroForm.invalid || especialidadesSeleccionadas.length === 0 || !captchaValido()"
     >
       <span *ngIf="!cargando()">Registrarse</span>
       <span *ngIf="cargando()">

@@ -223,6 +223,12 @@
       </div>
     </div>
 
+    <!-- reCAPTCHA -->
+    <div class="form-group">
+      <label class="form-label">Verificación de seguridad <span class="text-danger">*</span></label>
+      <app-recaptcha (captchaValidado)="onCaptchaValidado($event)"></app-recaptcha>
+    </div>
+
     <!-- Botones -->
     <div class="form-actions">
       <button
@@ -236,7 +242,7 @@
       <button
         type="submit"
         class="btn-submit"
-        [disabled]="cargando() || registroForm.invalid || (tipoUsuario() === 'especialista' && especialidadesSeleccionadas.length === 0)"
+        [disabled]="cargando() || registroForm.invalid || (tipoUsuario() === 'especialista' && especialidadesSeleccionadas.length === 0) || !captchaValido()"
       >
         <span *ngIf="!cargando()">Crear Usuario</span>
         <span *ngIf="cargando()">
