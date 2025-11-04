@@ -114,23 +114,24 @@ export class DisponibilidadService {
 
   /**
    * Obtiene la disponibilidad de un especialista para una especialidad específica
+   * Retorna todas las disponibilidades que coincidan (puede haber múltiples con diferentes horarios)
    */
   getDisponibilidadPorEspecialistaYEspecialidad(
     especialistaId: string,
     especialidad: string
-  ): Observable<DisponibilidadEspecialista | null> {
-    const id = `${especialistaId}_${especialidad}`;
-    const docRef = doc(this.firestore, `disponibilidad/${id}`);
+  ): Observable<DisponibilidadEspecialista[]> {
+    const q = query(
+      this.disponibilidadCollection,
+      where('especialistaId', '==', especialistaId),
+      where('especialidad', '==', especialidad)
+    );
     
-    return from(getDoc(docRef)).pipe(
-      map(docSnap => {
-        if (docSnap.exists()) {
-          return {
-            ...docSnap.data(),
-            id: docSnap.id
-          } as DisponibilidadEspecialista;
-        }
-        return null;
+    return from(getDocs(q)).pipe(
+      map(querySnapshot => {
+        return querySnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id
+        } as DisponibilidadEspecialista));
       })
     );
   }

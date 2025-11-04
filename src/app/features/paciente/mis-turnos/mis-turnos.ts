@@ -67,10 +67,14 @@ export class MisTurnosPacienteComponent implements OnInit {
     this.loadingService.show();
     this.turnoService.getTurnosPorPaciente(currentUser.uid).subscribe({
       next: (turnos) => {
+        console.log('Turnos cargados:', turnos);
         this.turnos.set(turnos);
         this.loadingService.hide();
       },
-      error: () => this.loadingService.hide()
+      error: (err) => {
+        console.error('Error al cargar turnos:', err);
+        this.loadingService.hide();
+      }
     });
   }
 
@@ -110,13 +114,40 @@ export class MisTurnosPacienteComponent implements OnInit {
       this.loadingService.show();
       try {
         await this.turnoService.cancelarTurno(turno.id, 'Cancelado por el paciente');
-        this.cargarTurnos();
+        
+        // Ocultar loading antes de recargar turnos
+        this.loadingService.hide();
+        
+        // Recargar turnos
+        await this.cargarTurnosAsync();
+        
+        // Mostrar notificación de éxito después de recargar
+        await this.notificationService.showSuccess(
+          'Turno cancelado',
+          'El turno ha sido cancelado correctamente.'
+        );
       } catch (error) {
         // Error manejado por el servicio
-      } finally {
         this.loadingService.hide();
       }
     }
+  }
+
+  private async cargarTurnosAsync(): Promise<void> {
+    const currentUser = this.authService.currentUser();
+    if (!currentUser) return;
+
+    return new Promise((resolve, reject) => {
+      this.turnoService.getTurnosPorPaciente(currentUser.uid).subscribe({
+        next: (turnos) => {
+          this.turnos.set(turnos);
+          resolve();
+        },
+        error: (err) => {
+          reject(err);
+        }
+      });
+    });
   }
 
   async calificarTurno(turno: Turno) {
@@ -124,8 +155,8 @@ export class MisTurnosPacienteComponent implements OnInit {
       title: 'Calificar atención',
       html: `
         <div class="mb-3">
-          <label>Calificación (1-5 estrellas)</label>
-          <select id="calificacion" class="form-control">
+          <label style="color: #333 !important; font-weight: 600 !important; display: block; margin-bottom: 0.5rem;">Calificación (1-5 estrellas)</label>
+          <select id="calificacion" class="form-control swal-input-select" style="color: #212529 !important; background-color: #ffffff !important; border: 2px solid #00adb5 !important; font-weight: 500 !important;">
             <option value="1">1 - Muy mala</option>
             <option value="2">2 - Mala</option>
             <option value="3">3 - Regular</option>
@@ -134,14 +165,20 @@ export class MisTurnosPacienteComponent implements OnInit {
           </select>
         </div>
         <div>
-          <label>Comentario</label>
-          <textarea id="comentario" class="form-control" rows="3" placeholder="Describe tu experiencia..."></textarea>
+          <label style="color: #333 !important; font-weight: 600 !important; display: block; margin-bottom: 0.5rem;">Comentario</label>
+          <textarea id="comentario" class="form-control swal-input-textarea" rows="3" placeholder="Describe tu experiencia..." style="color: #212529 !important; background-color: #ffffff !important; border: 2px solid #00adb5 !important; font-weight: 500 !important;"></textarea>
         </div>
       `,
       showCancelButton: true,
       confirmButtonText: 'Enviar',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#00adb5',
+      cancelButtonColor: '#6c757d',
+      customClass: {
+        popup: 'swal-dark-popup',
+        title: 'swal-dark-title',
+        htmlContainer: 'swal-dark-container'
+      },
       preConfirm: () => {
         const calificacion = (document.getElementById('calificacion') as HTMLSelectElement).value;
         const comentario = (document.getElementById('comentario') as HTMLTextAreaElement).value;
@@ -165,10 +202,20 @@ export class MisTurnosPacienteComponent implements OnInit {
           resultado.calificacion,
           resultado.comentario
         );
-        this.cargarTurnos();
+        
+        // Ocultar loading antes de recargar turnos
+        this.loadingService.hide();
+        
+        // Recargar turnos
+        await this.cargarTurnosAsync();
+        
+        // Mostrar notificación de éxito después de recargar
+        await this.notificationService.showSuccess(
+          'Reseña guardada',
+          'Gracias por tu feedback. Tu reseña ha sido guardada correctamente.'
+        );
       } catch (error) {
         // Error manejado por el servicio
-      } finally {
         this.loadingService.hide();
       }
     }

@@ -101,23 +101,42 @@ export class MisTurnosEspecialistaComponent implements OnInit {
       inputLabel: 'Comentario (opcional)',
       inputPlaceholder: 'Agrega un comentario para el paciente...',
       inputAttributes: {
-        'aria-label': 'Comentario opcional'
+        'aria-label': 'Comentario opcional',
+        'style': 'color: #212529 !important; background-color: #ffffff !important; font-weight: 500 !important; border: 2px solid #00adb5 !important;'
       },
+      inputValue: '',
       showCancelButton: true,
       confirmButtonColor: '#00adb5',
       cancelButtonColor: '#d33',
       confirmButtonText: 'Aceptar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        popup: 'swal-dark-popup',
+        title: 'swal-dark-title',
+        inputLabel: 'swal-dark-label',
+        input: 'swal-dark-input',
+        htmlContainer: 'swal-dark-container'
+      }
     });
 
     if (comentario !== undefined) {
       this.loadingService.show();
       try {
         await this.turnoService.aceptarTurno(turno.id, comentario || '');
-        this.cargarTurnos();
+        
+        // Ocultar loading antes de recargar turnos
+        this.loadingService.hide();
+        
+        // Recargar turnos
+        await this.cargarTurnosAsync();
+        
+        // Mostrar notificación de éxito después de recargar
+        await this.notificationService.showSuccess(
+          'Turno aceptado',
+          'El turno ha sido aceptado correctamente.'
+        );
       } catch (error) {
         // Error manejado por el servicio
-      } finally {
         this.loadingService.hide();
       }
     }
@@ -130,8 +149,10 @@ export class MisTurnosEspecialistaComponent implements OnInit {
       inputLabel: 'Motivo del rechazo (requerido)',
       inputPlaceholder: 'Explica por qué rechazas el turno...',
       inputAttributes: {
-        'aria-label': 'Motivo del rechazo'
+        'aria-label': 'Motivo del rechazo',
+        'style': 'color: #212529 !important; background-color: #ffffff !important; font-weight: 500 !important; border: 2px solid #00adb5 !important;'
       },
+      inputValue: '',
       inputValidator: (value) => {
         if (!value || value.trim().length < 5) {
           return 'Debes proporcionar un motivo de al menos 5 caracteres';
@@ -142,20 +163,54 @@ export class MisTurnosEspecialistaComponent implements OnInit {
       confirmButtonColor: '#d33',
       cancelButtonColor: '#6c757d',
       confirmButtonText: 'Rechazar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        popup: 'swal-dark-popup',
+        title: 'swal-dark-title',
+        inputLabel: 'swal-dark-label',
+        input: 'swal-dark-input',
+        htmlContainer: 'swal-dark-container'
+      }
     });
 
     if (comentario) {
       this.loadingService.show();
       try {
         await this.turnoService.rechazarTurno(turno.id, comentario);
-        this.cargarTurnos();
+        
+        // Ocultar loading antes de recargar turnos
+        this.loadingService.hide();
+        
+        // Recargar turnos
+        await this.cargarTurnosAsync();
+        
+        // Mostrar notificación de éxito después de recargar
+        await this.notificationService.showSuccess(
+          'Turno rechazado',
+          'El turno ha sido rechazado correctamente.'
+        );
       } catch (error) {
         // Error manejado por el servicio
-      } finally {
         this.loadingService.hide();
       }
     }
+  }
+
+  private async cargarTurnosAsync(): Promise<void> {
+    const currentUser = this.authService.currentUser();
+    if (!currentUser) return;
+
+    return new Promise((resolve, reject) => {
+      this.turnoService.getTurnosPorEspecialista(currentUser.uid).subscribe({
+        next: (turnos) => {
+          this.turnos.set(turnos);
+          resolve();
+        },
+        error: (err) => {
+          reject(err);
+        }
+      });
+    });
   }
 
   async cancelarTurno(turno: Turno) {
@@ -174,10 +229,20 @@ export class MisTurnosEspecialistaComponent implements OnInit {
       this.loadingService.show();
       try {
         await this.turnoService.cancelarTurno(turno.id, 'Cancelado por el especialista');
-        this.cargarTurnos();
+        
+        // Ocultar loading antes de recargar turnos
+        this.loadingService.hide();
+        
+        // Recargar turnos
+        await this.cargarTurnosAsync();
+        
+        // Mostrar notificación de éxito después de recargar
+        await this.notificationService.showSuccess(
+          'Turno cancelado',
+          'El turno ha sido cancelado correctamente.'
+        );
       } catch (error) {
         // Error manejado por el servicio
-      } finally {
         this.loadingService.hide();
       }
     }
@@ -199,10 +264,20 @@ export class MisTurnosEspecialistaComponent implements OnInit {
       this.loadingService.show();
       try {
         await this.turnoService.finalizarTurno(turno.id);
-        this.cargarTurnos();
+        
+        // Ocultar loading antes de recargar turnos
+        this.loadingService.hide();
+        
+        // Recargar turnos
+        await this.cargarTurnosAsync();
+        
+        // Mostrar notificación de éxito después de recargar
+        await this.notificationService.showSuccess(
+          'Turno finalizado',
+          'El turno ha sido finalizado. El paciente podrá dejar una reseña.'
+        );
       } catch (error) {
         // Error manejado por el servicio
-      } finally {
         this.loadingService.hide();
       }
     }

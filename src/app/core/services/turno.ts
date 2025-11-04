@@ -45,11 +45,7 @@ export class TurnoService {
 
       const docRef = await addDoc(this.turnosCollection, turnoData);
       
-      await this.notificationService.showSuccess(
-        'Turno solicitado',
-        'Tu turno ha sido solicitado correctamente. El especialista lo revisará pronto.'
-      );
-
+      // No mostrar notificación aquí, el componente lo manejará
       return docRef.id;
     } catch (error: any) {
       await this.notificationService.showError(
@@ -77,38 +73,70 @@ export class TurnoService {
 
   /**
    * Obtiene todos los turnos de un paciente
+   * Nota: Se ordena en memoria para evitar requerir índice compuesto en Firestore
+   * Ordena por fecha y hora ascendente (turno más próximo primero)
    */
   getTurnosPorPaciente(pacienteId: string): Observable<Turno[]> {
     const q = query(
       this.turnosCollection,
-      where('pacienteId', '==', pacienteId),
-      orderBy('fechaTimestamp', 'desc')
+      where('pacienteId', '==', pacienteId)
     );
 
     return from(getDocs(q)).pipe(
       map(querySnapshot => {
-        return querySnapshot.docs.map(doc => 
+        const turnos = querySnapshot.docs.map(doc => 
           this.convertirTurnoDesdeFirestore(doc.id, doc.data())
         );
+        // Ordenar en memoria por fecha y hora ascendente (más próximo primero)
+        return turnos.sort((a, b) => {
+          const fechaA = a.fechaTimestamp?.toMillis() || 0;
+          const fechaB = b.fechaTimestamp?.toMillis() || 0;
+          
+          // Si las fechas son diferentes, ordenar por fecha
+          if (fechaA !== fechaB) {
+            return fechaA - fechaB; // Ascendente
+          }
+          
+          // Si la fecha es la misma, ordenar por hora
+          const horaA = this.convertirHoraAMinutos(a.hora);
+          const horaB = this.convertirHoraAMinutos(b.hora);
+          return horaA - horaB; // Ascendente
+        });
       })
     );
   }
 
   /**
    * Obtiene todos los turnos de un especialista
+   * Nota: Se ordena en memoria para evitar requerir índice compuesto en Firestore
+   * Ordena por fecha y hora ascendente (turno más próximo primero)
    */
   getTurnosPorEspecialista(especialistaId: string): Observable<Turno[]> {
     const q = query(
       this.turnosCollection,
-      where('especialistaId', '==', especialistaId),
-      orderBy('fechaTimestamp', 'desc')
+      where('especialistaId', '==', especialistaId)
     );
 
     return from(getDocs(q)).pipe(
       map(querySnapshot => {
-        return querySnapshot.docs.map(doc => 
+        const turnos = querySnapshot.docs.map(doc => 
           this.convertirTurnoDesdeFirestore(doc.id, doc.data())
         );
+        // Ordenar en memoria por fecha y hora ascendente (más próximo primero)
+        return turnos.sort((a, b) => {
+          const fechaA = a.fechaTimestamp?.toMillis() || 0;
+          const fechaB = b.fechaTimestamp?.toMillis() || 0;
+          
+          // Si las fechas son diferentes, ordenar por fecha
+          if (fechaA !== fechaB) {
+            return fechaA - fechaB; // Ascendente
+          }
+          
+          // Si la fecha es la misma, ordenar por hora
+          const horaA = this.convertirHoraAMinutos(a.hora);
+          const horaB = this.convertirHoraAMinutos(b.hora);
+          return horaA - horaB; // Ascendente
+        });
       })
     );
   }
@@ -207,10 +235,7 @@ export class TurnoService {
         fechaModificacionTimestamp: serverTimestamp()
       });
 
-      await this.notificationService.showSuccess(
-        'Turno aceptado',
-        'El turno ha sido aceptado correctamente.'
-      );
+      // No mostrar notificación aquí, el componente lo manejará
     } catch (error: any) {
       await this.notificationService.showError(
         'Error al aceptar turno',
@@ -240,10 +265,7 @@ export class TurnoService {
         fechaModificacionTimestamp: serverTimestamp()
       });
 
-      await this.notificationService.showSuccess(
-        'Turno rechazado',
-        'El turno ha sido rechazado correctamente.'
-      );
+      // No mostrar notificación aquí, el componente lo manejará
     } catch (error: any) {
       await this.notificationService.showError(
         'Error al rechazar turno',
@@ -265,10 +287,7 @@ export class TurnoService {
         fechaModificacionTimestamp: serverTimestamp()
       });
 
-      await this.notificationService.showSuccess(
-        'Turno cancelado',
-        'El turno ha sido cancelado correctamente.'
-      );
+      // No mostrar notificación aquí, el componente lo manejará
     } catch (error: any) {
       await this.notificationService.showError(
         'Error al cancelar turno',
@@ -289,10 +308,7 @@ export class TurnoService {
         fechaModificacionTimestamp: serverTimestamp()
       });
 
-      await this.notificationService.showSuccess(
-        'Turno finalizado',
-        'El turno ha sido finalizado. El paciente podrá dejar una reseña.'
-      );
+      // No mostrar notificación aquí, el componente lo manejará
     } catch (error: any) {
       await this.notificationService.showError(
         'Error al finalizar turno',
@@ -329,10 +345,7 @@ export class TurnoService {
         fechaModificacionTimestamp: serverTimestamp()
       });
 
-      await this.notificationService.showSuccess(
-        'Reseña guardada',
-        'Gracias por tu feedback. Tu reseña ha sido guardada correctamente.'
-      );
+      // No mostrar notificación aquí, el componente lo manejará
     } catch (error: any) {
       await this.notificationService.showError(
         'Error al guardar reseña',
@@ -343,6 +356,15 @@ export class TurnoService {
   }
 
   /**
+   * Convierte hora en formato "HH:mm" a minutos desde medianoche
+   */
+  private convertirHoraAMinutos(hora: string): number {
+    if (!hora || !hora.includes(':')) return 0;
+    const [horas, minutos] = hora.split(':').map(Number);
+    return (horas || 0) * 60 + (minutos || 0);
+  }
+
+  /**
    * Convierte datos de Firestore a modelo Turno
    */
   private convertirTurnoDesdeFirestore(id: string, data: any): Turno {
@@ -350,6 +372,20 @@ export class TurnoService {
     const fechaCreacionTimestamp = data.fechaCreacionTimestamp as Timestamp;
     const fechaModificacionTimestamp = data.fechaModificacionTimestamp as Timestamp;
     const resenaFechaTimestamp = data.resena?.fechaTimestamp as Timestamp;
+
+    // Convertir fechaTimestamp a Date de forma segura
+    let fecha: Date;
+    if (fechaTimestamp && fechaTimestamp.toDate) {
+      fecha = fechaTimestamp.toDate();
+    } else if (data.fecha && data.fecha instanceof Date) {
+      fecha = data.fecha;
+    } else if (data.fecha && typeof data.fecha === 'string') {
+      fecha = new Date(data.fecha);
+    } else {
+      // Si no hay fecha válida, usar una fecha por defecto muy antigua para evitar confusión
+      console.warn(`Turno ${id} no tiene fecha válida. Usando fecha por defecto.`);
+      fecha = new Date(2000, 0, 1);
+    }
 
     return {
       id,
@@ -364,7 +400,7 @@ export class TurnoService {
       especialistaApellido: data.especialistaApellido,
       especialistaEmail: data.especialistaEmail,
       especialidad: data.especialidad,
-      fecha: fechaTimestamp?.toDate() || new Date(),
+      fecha,
       hora: data.hora,
       fechaTimestamp,
       estado: data.estado as EstadoTurno,

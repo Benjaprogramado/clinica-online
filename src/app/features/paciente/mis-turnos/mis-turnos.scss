@@ -22,13 +22,61 @@
       padding: 1rem;
       border-radius: 12px 12px 0 0;
 
-      h2, h3, h4, h5, h6, p, span, i {
+      h2, h3, h4, h5, h6, p, span, i, small {
         color: white !important;
+      }
+
+      .badge {
+        color: #000 !important;
+        font-weight: 600;
+      }
+
+      .text-muted {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-weight: 500;
       }
     }
 
     .card-body {
       padding: 1.5rem;
+      background: $card-background;
+      color: $text-light !important;
+
+      .card-title {
+        color: $text-light !important;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+
+      .card-text {
+        color: $text-light !important;
+        margin-bottom: 0.75rem;
+
+        strong {
+          color: $primary-light !important;
+          font-weight: 600;
+        }
+
+        small {
+          color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        &.text-muted {
+          color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        &.text-info {
+          color: $primary-light !important;
+        }
+
+        &.text-warning {
+          color: #ffc107 !important;
+        }
+      }
+
+      h5, h6, p, span, div {
+        color: $text-light !important;
+      }
     }
 
     .card-footer {
@@ -49,6 +97,10 @@
       color: $text-light;
       box-shadow: 0 0 0 0.2rem rgba(0, 173, 181, 0.25);
     }
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
   }
 
   .badge {
@@ -61,6 +113,138 @@
 
     &:hover {
       transform: translateY(-2px);
+    }
+  }
+
+  .alert-info {
+    background-color: rgba(0, 173, 181, 0.2);
+    border-color: $primary-color;
+    color: $text-light;
+  }
+
+  // Estilos personalizados para SweetAlert2 modals
+  ::ng-deep {
+    .swal-dark-popup {
+      .swal-dark-title {
+        color: #333 !important;
+        font-weight: 600 !important;
+      }
+
+      .swal-dark-label {
+        color: #333 !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+      }
+
+      .swal-dark-input {
+        color: #212529 !important;
+        font-weight: 500 !important;
+        background-color: #ffffff !important;
+        border: 2px solid #00adb5 !important;
+        min-height: 100px !important;
+
+        &::placeholder {
+          color: #6c757d !important;
+          opacity: 1 !important;
+          font-weight: 400 !important;
+        }
+
+        &:focus {
+          color: #212529 !important;
+          background-color: #ffffff !important;
+          border-color: #00adb5 !important;
+          box-shadow: 0 0 0 0.2rem rgba(0, 173, 181, 0.25) !important;
+        }
+
+        // Asegurar que el texto escrito tenga buen contraste
+        &::-webkit-input-placeholder {
+          color: #6c757d !important;
+        }
+
+        &::-moz-placeholder {
+          color: #6c757d !important;
+          opacity: 1 !important;
+        }
+
+        &:-ms-input-placeholder {
+          color: #6c757d !important;
+        }
+
+        &:-moz-placeholder {
+          color: #6c757d !important;
+          opacity: 1 !important;
+        }
+      }
+
+      // Estilos adicionales para el textarea dentro del modal
+      textarea.swal-dark-input {
+        color: #212529 !important;
+        background-color: #ffffff !important;
+      }
+
+      .swal-dark-container {
+        color: #333 !important;
+
+        label {
+          color: #333 !important;
+          font-weight: 600 !important;
+        }
+
+        .swal-input-select,
+        .swal-input-textarea {
+          color: #212529 !important;
+          background-color: #ffffff !important;
+          border: 2px solid #00adb5 !important;
+          font-weight: 500 !important;
+
+          &::placeholder {
+            color: #6c757d !important;
+            opacity: 1 !important;
+          }
+
+          &:focus {
+            color: #212529 !important;
+            background-color: #ffffff !important;
+            border-color: #00adb5 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 0.2rem rgba(0, 173, 181, 0.25) !important;
+          }
+        }
+      }
+
+      .swal2-validation-message {
+        color: #d33 !important;
+        font-weight: 500 !important;
+      }
+    }
+
+    // Estilos globales para textareas y selects en SweetAlert2 dentro de este componente
+    .swal2-popup {
+      textarea,
+      select {
+        color: #212529 !important;
+        background-color: #ffffff !important;
+        border: 2px solid #00adb5 !important;
+        font-weight: 500 !important;
+
+        &::placeholder {
+          color: #6c757d !important;
+          opacity: 1 !important;
+        }
+
+        &:focus {
+          color: #212529 !important;
+          background-color: #ffffff !important;
+          border-color: #00adb5 !important;
+          outline: none !important;
+          box-shadow: 0 0 0 0.2rem rgba(0, 173, 181, 0.25) !important;
+        }
+      }
+
+      label {
+        color: #333 !important;
+        font-weight: 600 !important;
+      }
     }
   }
 }
