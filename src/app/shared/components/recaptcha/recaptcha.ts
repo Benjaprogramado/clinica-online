@@ -25,7 +25,7 @@ export class RecaptchaComponent implements OnInit, OnDestroy {
   // IMPORTANTE: Para producción, reemplazar con tu Site Key real de Google reCAPTCHA
   // Obtén tu key en: https://www.google.com/recaptcha/admin/create
   // La key actual es de prueba de Google (funciona siempre como válida)
-  private readonly SITE_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'; // Key de prueba - reemplazar con tu key real
+  private readonly SITE_KEY = '6LfBkQEsAAAAAIAIyyBhX4obDPmH0ctiawefsdTS'; // Key de prueba - reemplazar con tu key real
   
   captchaValido = signal(false);
   captchaCargado = signal(false);
@@ -89,6 +89,8 @@ export class RecaptchaComponent implements OnInit, OnDestroy {
         if (container && window.grecaptcha.render) {
           this.widgetId = window.grecaptcha.render(container, {
             sitekey: this.SITE_KEY,
+            size: 'normal', // Normal: muestra checkbox, puede mostrar desafío
+            theme: 'light', // light o dark
             callback: (token: string) => {
               this.captchaValido.set(true);
               this.captchaValidado.emit(true);
@@ -100,14 +102,55 @@ export class RecaptchaComponent implements OnInit, OnDestroy {
             'error-callback': () => {
               this.captchaValido.set(false);
               this.captchaValidado.emit(false);
+            },
+            'chalexpired-callback': () => {
+              // Callback cuando el desafío expira
+              this.captchaValido.set(false);
+              this.captchaValidado.emit(false);
             }
           });
           this.captchaCargado.set(true);
+          
+          // Forzar el desafío de imágenes haciendo click programático en el checkbox
+          // Esto activará el desafío visual de reCAPTCHA
+          setTimeout(() => {
+            this.forzarDesafioVisual();
+          }, 300);
         }
       } catch (error) {
         console.error('Error al inicializar reCAPTCHA:', error);
       }
     }, 100);
+  }
+
+  /**
+   * Intenta forzar el desafío visual de reCAPTCHA
+   * Nota: Debido a políticas de seguridad, esto puede no funcionar.
+   * La mejor forma es configurar el reCAPTCHA en Google Console
+   * para que sea más estricto y muestre el desafío más frecuentemente.
+   */
+  private forzarDesafioVisual(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    try {
+      // Buscar el contenedor del reCAPTCHA y hacer click programático
+      // Esto puede activar el desafío visual
+      const container = document.getElementById('recaptcha-container');
+      if (container) {
+        // Simular click en el área del reCAPTCHA
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        container.dispatchEvent(clickEvent);
+      }
+    } catch (error) {
+      // Si falla, el usuario deberá interactuar manualmente con el checkbox
+      // Esto es normal debido a las políticas de seguridad
+    }
   }
 
   resetear(): void {
