@@ -2,6 +2,71 @@
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-12 col-lg-10">
+        <!-- Resumen del Especialista -->
+        @if (especialista()) {
+          <div class="card custom-card mb-4">
+            <div class="card-header">
+              <h2 class="mb-0">
+                <i class="pi pi-user me-2"></i>
+                Mi Perfil
+              </h2>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-12 col-md-4 text-center mb-3 mb-md-0">
+                  @if (especialista()!.imagenPerfil) {
+                    <img [src]="especialista()!.imagenPerfil" alt="Foto de perfil" class="img-perfil">
+                  } @else {
+                    <div class="img-perfil-placeholder">
+                      <i class="pi pi-user"></i>
+                    </div>
+                  }
+                </div>
+                <div class="col-12 col-md-8">
+                  <div class="info-resumen">
+                    <div class="info-item">
+                      <span class="info-label"><i class="pi pi-id-card me-2"></i>Nombre completo:</span>
+                      <span class="info-value">{{ especialista()!.nombre }} {{ especialista()!.apellido }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label"><i class="pi pi-calendar me-2"></i>Edad:</span>
+                      <span class="info-value">{{ especialista()!.edad }} años</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label"><i class="pi pi-key me-2"></i>DNI:</span>
+                      <span class="info-value">{{ especialista()!.dni }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label"><i class="pi pi-envelope me-2"></i>Email:</span>
+                      <span class="info-value">{{ especialista()!.email }}</span>
+                    </div>
+                    @if (tieneEspecialidades()) {
+                      <div class="info-item">
+                        <span class="info-label"><i class="pi pi-briefcase me-2"></i>Especialidades:</span>
+                        <span class="info-value">
+                          @for (esp of obtenerEspecialidades(); track esp; let last = $last) {
+                            {{ esp }}{{ !last ? ', ' : '' }}
+                          }
+                        </span>
+                      </div>
+                    }
+                    <div class="info-item">
+                      <span class="info-label"><i class="pi pi-check-circle me-2"></i>Estado:</span>
+                      <span class="info-value">
+                        @if (especialista()!.aprobado) {
+                          <span class="badge bg-success">Aprobado</span>
+                        } @else {
+                          <span class="badge bg-warning">Pendiente de aprobación</span>
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
         <!-- Formulario de Disponibilidad -->
         <div class="card custom-card mb-4">
           <div class="card-header">
@@ -18,7 +83,7 @@
                   Especialidad <span class="text-danger">*</span>
                 </label>
                 <div class="d-flex flex-wrap gap-2">
-                  @for (esp of especialidades(); track esp) {
+                  @for (esp of especialidadesDelEspecialista(); track esp) {
                     <button
                       type="button"
                       class="btn"
@@ -36,69 +101,80 @@
                 }
               </div>
 
-              <!-- Días de la Semana -->
+              <!-- Duración del Turno -->
               <div class="mb-4">
                 <label class="form-label fw-bold">
-                  Días disponibles <span class="text-danger">*</span>
+                  Duración del turno (minutos) <span class="text-danger">*</span>
                 </label>
                 <div class="d-flex flex-wrap gap-2">
-                  @for (dia of diasSemana; track dia) {
+                  @for (duracion of duracionesTurno; track duracion) {
                     <button
                       type="button"
                       class="btn"
-                      [class.btn-primary]="diaEstaSeleccionado(dia)"
-                      [class.btn-outline-primary]="!diaEstaSeleccionado(dia)"
-                      (click)="toggleDia(dia)">
-                      {{ obtenerTextoDia(dia) }}
+                      [class.btn-primary]="formulario.get('duracionTurno')?.value === duracion"
+                      [class.btn-outline-primary]="formulario.get('duracionTurno')?.value !== duracion"
+                      (click)="formulario.patchValue({ duracionTurno: duracion })">
+                      {{ duracion }} min
                     </button>
                   }
                 </div>
-                @if (diasArray.length === 0 && formulario.get('dias')?.touched) {
+              </div>
+
+              <!-- Días y Horarios -->
+              <div class="mb-4">
+                <label class="form-label fw-bold">
+                  Días y Horarios <span class="text-danger">*</span>
+                </label>
+                <div class="dias-horarios-container">
+                  @for (dia of diasSemana; track dia; let i = $index) {
+                    <div class="dia-horario-row" [formGroup]="getDiaFormGroup(i)">
+                      <div class="dia-checkbox">
+                        <input
+                          type="checkbox"
+                          [id]="'dia-' + i"
+                          formControlName="seleccionado"
+                          class="form-check-input">
+                        <label [for]="'dia-' + i" class="form-check-label">
+                          {{ obtenerTextoDia(dia) }}
+                        </label>
+                      </div>
+                      <div class="horarios-inputs">
+                        <div class="horario-input">
+                          <label class="small">Inicio</label>
+                          <input
+                            type="time"
+                            class="form-control form-control-sm"
+                            formControlName="horaInicio"
+                            [min]="getHorarioMin(dia)"
+                            [max]="getHorarioMax(dia)"
+                            [disabled]="!diaEstaSeleccionado(i)"
+                            (change)="validarHorarioAlCambiar(i, dia, 'horaInicio')">
+                        </div>
+                        <div class="horario-input">
+                          <label class="small">Fin</label>
+                          <input
+                            type="time"
+                            class="form-control form-control-sm"
+                            formControlName="horaFin"
+                            [min]="getHorarioMin(dia)"
+                            [max]="getHorarioMax(dia)"
+                            [disabled]="!diaEstaSeleccionado(i)"
+                            (change)="validarHorarioAlCambiar(i, dia, 'horaFin')">
+                        </div>
+                      </div>
+                      @if (diaEstaSeleccionado(i) && !validarHorario(i, dia) && getDiaFormGroup(i).get('horaInicio')?.touched) {
+                        <div class="text-danger small mt-1">
+                          Los horarios deben estar dentro del rango de atención de la clínica
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+                @if (!tieneDiasSeleccionados() && formulario.get('dias')?.touched) {
                   <div class="text-danger small mt-1">
                     Selecciona al menos un día
                   </div>
                 }
-              </div>
-
-              <!-- Horarios -->
-              <div class="row mb-4">
-                <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">
-                    Hora de inicio <span class="text-danger">*</span>
-                  </label>
-                  <input
-                    type="time"
-                    class="form-control"
-                    formControlName="horaInicio"
-                    required>
-                </div>
-                <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">
-                    Hora de fin <span class="text-danger">*</span>
-                  </label>
-                  <input
-                    type="time"
-                    class="form-control"
-                    formControlName="horaFin"
-                    required>
-                </div>
-                <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">
-                    Duración turno (min) <span class="text-danger">*</span>
-                  </label>
-                  <div class="d-flex flex-wrap gap-2">
-                    @for (duracion of duracionesTurno; track duracion) {
-                      <button
-                        type="button"
-                        class="btn btn-sm"
-                        [class.btn-primary]="formulario.get('duracionTurno')?.value === duracion"
-                        [class.btn-outline-primary]="formulario.get('duracionTurno')?.value !== duracion"
-                        (click)="formulario.patchValue({ duracionTurno: duracion })">
-                        {{ duracion }}
-                      </button>
-                    }
-                  </div>
-                </div>
               </div>
 
               <!-- Botón Guardar -->
@@ -132,19 +208,21 @@
               <div class="row g-3">
                 @for (disp of disponibilidadesGuardadas(); track disp.id) {
                   <div class="col-12 col-md-6">
-                    <div class="card bg-dark border-primary">
+                    <div class="card disponibilidad-card">
                       <div class="card-body">
-                        <h5>{{ disp.especialidad }}</h5>
-                        <p><strong>Días:</strong> 
-                          @for (dia of disp.dias; track dia) {
-                            {{ obtenerTextoDia(dia) }}
-                            @if (dia !== disp.dias[disp.dias.length - 1]) {
-                              ,
-                            }
+                        <h5 class="card-title">{{ disp.especialidad }}</h5>
+                        <p class="card-text">
+                          <strong>Días:</strong> 
+                          @for (dia of disp.dias; track dia; let last = $last) {
+                            {{ obtenerTextoDia(dia) }}{{ !last ? ', ' : '' }}
                           }
                         </p>
-                        <p><strong>Horario:</strong> {{ disp.horaInicio }} - {{ disp.horaFin }}</p>
-                        <p><strong>Duración:</strong> {{ disp.duracionTurno }} minutos</p>
+                        <p class="card-text">
+                          <strong>Horario:</strong> {{ disp.horaInicio }} - {{ disp.horaFin }}
+                        </p>
+                        <p class="card-text">
+                          <strong>Duración:</strong> {{ disp.duracionTurno }} minutos
+                        </p>
                         <button
                           class="btn btn-sm btn-danger"
                           (click)="eliminarDisponibilidad(disp)">

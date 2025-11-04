@@ -46,24 +46,25 @@ export class DisponibilidadService {
       }
 
       // Validar duración de turno
-      if (![15, 30, 45, 60].includes(disponibilidad.duracionTurno)) {
-        throw new Error('La duración del turno debe ser 15, 30, 45 o 60 minutos');
+      if (![30, 45, 60].includes(disponibilidad.duracionTurno)) {
+        throw new Error('La duración del turno debe ser 30, 45 o 60 minutos (mínimo 30 minutos)');
       }
 
-      // Generar ID único basado en especialista y especialidad
-      const id = `${disponibilidad.especialistaId}_${disponibilidad.especialidad}`;
+      // Generar ID único basado en especialista, especialidad y horarios
+      // Si el ID existe, incluir también los horarios para diferenciar disponibilidades diferentes
+      const idBase = `${disponibilidad.especialistaId}_${disponibilidad.especialidad}`;
+      const horariosHash = `${disponibilidad.horaInicio.replace(':', '')}_${disponibilidad.horaFin.replace(':', '')}`;
+      const id = `${idBase}_${horariosHash}`;
       const docRef = doc(this.firestore, `disponibilidad/${id}`);
 
       await setDoc(docRef, {
         ...disponibilidad,
         id,
+        dias: disponibilidad.dias, // Asegurar que el array se guarde explícitamente
         fechaModificacion: serverTimestamp()
-      }, { merge: true });
+      }, { merge: false }); // Usar merge: false para reemplazar completamente el documento
 
-      await this.notificationService.showSuccess(
-        'Disponibilidad guardada',
-        'Tu disponibilidad horaria ha sido guardada correctamente.'
-      );
+      // No mostrar notificación aquí, el componente lo manejará
     } catch (error: any) {
       await this.notificationService.showError(
         'Error al guardar disponibilidad',
@@ -137,16 +138,11 @@ export class DisponibilidadService {
   /**
    * Elimina la disponibilidad de un especialista
    */
-  async eliminarDisponibilidad(especialistaId: string, especialidad: string): Promise<void> {
+  async eliminarDisponibilidad(disponibilidadId: string): Promise<void> {
     try {
-      const id = `${especialistaId}_${especialidad}`;
-      const docRef = doc(this.firestore, `disponibilidad/${id}`);
+      const docRef = doc(this.firestore, `disponibilidad/${disponibilidadId}`);
       await deleteDoc(docRef);
-
-      await this.notificationService.showSuccess(
-        'Disponibilidad eliminada',
-        'La disponibilidad ha sido eliminada correctamente.'
-      );
+      // No mostrar notificación aquí, el componente lo manejará
     } catch (error: any) {
       await this.notificationService.showError(
         'Error al eliminar disponibilidad',
