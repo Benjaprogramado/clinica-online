@@ -9,7 +9,7 @@ import { trigger, transition, style, animate, query, group } from '@angular/anim
 
 // eslint-disable-next-line deprecation/deprecation
 const routeAnimations = trigger('routeAnimations', [
-  transition('* <=> fade', [
+  transition('* <=> *', [
     query(':enter, :leave', [
       style({
         position: 'absolute',
@@ -20,33 +20,30 @@ const routeAnimations = trigger('routeAnimations', [
     ], { optional: true }),
     group([
       query(':leave', [
-        animate('300ms ease-in', style({ opacity: 0 }))
+        animate('{{ leaveTiming }}', style({
+          opacity: 0,
+          transform: '{{ leaveTransform }}'
+        }))
       ], { optional: true }),
       query(':enter', [
-        style({ opacity: 0 }),
-        animate('400ms ease-out', style({ opacity: 1 }))
+        style({
+          opacity: 0,
+          transform: '{{ enterStartTransform }}'
+        }),
+        animate('{{ enterTiming }}', style({
+          opacity: 1,
+          transform: 'translateY(0)'
+        }))
       ], { optional: true })
     ])
-  ]),
-  transition('* <=> slideUp', [
-    query(':enter, :leave', [
-      style({
-        position: 'absolute',
-        width: '100%',
-        top: 0,
-        left: 0
-      })
-    ], { optional: true }),
-    group([
-      query(':leave', [
-        animate('350ms ease-in', style({ opacity: 0, transform: 'translateY(-40px)' }))
-      ], { optional: true }),
-      query(':enter', [
-        style({ opacity: 0, transform: 'translateY(120px)' }),
-        animate('450ms cubic-bezier(0.22, 0.82, 0.25, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
-      ], { optional: true })
-    ])
-  ])
+  ], {
+    params: {
+      leaveTiming: '450ms ease-in',
+      leaveTransform: 'translateY(0)',
+      enterStartTransform: 'translateY(0)',
+      enterTiming: '600ms ease-out'
+    }
+  })
 ]);
 
 @Component({
@@ -109,7 +106,35 @@ export class AppComponent {
   private loadingService = inject(LoadingService);
   isLoading = this.loadingService.isLoading;
 
-  prepareRoute(outlet: RouterOutlet): string {
-    return outlet?.activatedRouteData?.['animation'] || 'fade';
+  prepareRoute(outlet: RouterOutlet): { value: string; params: Record<string, string> } | string {
+    if (!outlet?.isActivated) {
+      return 'initial';
+    }
+
+    const activatedRoute = outlet.activatedRoute;
+    const animationType = outlet.activatedRouteData?.['animation'] || 'fade';
+    const routeKey = activatedRoute.routeConfig?.path || activatedRoute.toString();
+
+    if (animationType === 'slideUp') {
+      return {
+        value: routeKey,
+        params: {
+          leaveTiming: '550ms ease-in',
+          leaveTransform: 'translateY(-40px)',
+          enterStartTransform: 'translateY(120px)',
+          enterTiming: '650ms cubic-bezier(0.22, 0.82, 0.25, 1)'
+        }
+      };
+    }
+
+    return {
+      value: routeKey,
+      params: {
+        leaveTiming: '450ms ease-in',
+        leaveTransform: 'translateY(0)',
+        enterStartTransform: 'translateY(0)',
+        enterTiming: '600ms ease-out'
+      }
+    };
   }
 }
