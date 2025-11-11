@@ -5,7 +5,7 @@ Aplicación web desarrollada en Angular 20 para gestionar la atención de una cl
 ## Acceso y Autenticación
 
 - **Landing page:** página inicial con presentación general y accesos directos a registro e inicio de sesión.
-[Pantalla de landing](public/capturaLanding.png)
+![Pantalla de landing](public/capturaLanding.png)
 - **Registro de usuarios:** flujo diferenciado para pacientes y especialistas, con validaciones, carga de documentación y selección de especialidades.
 - **Login:** autenticación con email y contraseña. Existen accesos rápidos configurados para pruebas (perfiles paciente, especialista y administrador).
 
