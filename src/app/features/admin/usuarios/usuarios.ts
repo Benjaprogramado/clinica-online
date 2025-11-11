@@ -172,6 +172,14 @@ export class Usuarios implements OnInit {
     this.cargarUsuarios();
   }
 
+  seleccionarUsuario(usuario: Usuario): void {
+    if (usuario.role !== 'paciente') {
+      return;
+    }
+
+    void this.descargarHistorialPaciente(usuario);
+  }
+
   async descargarUsuariosExcel(): Promise<void> {
     try {
       const usuarios = this.usuarios();

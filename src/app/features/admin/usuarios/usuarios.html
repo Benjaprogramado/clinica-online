@@ -66,7 +66,13 @@
 
   <div class="grid-usuarios" *ngIf="!cargando() && filtrarUsuarios().length > 0">
     @for (usuario of filtrarUsuarios(); track usuario.uid) {
-      <article class="usuario-card" appHoverElevate [class.inactivo]="!usuario.activo">
+      <article 
+        class="usuario-card" 
+        appHoverElevate 
+        [class.inactivo]="!usuario.activo"
+        [class.clickable]="usuario.role === 'paciente'"
+        (click)="seleccionarUsuario(usuario)"
+      >
         <header>
           <div class="identidad">
             <h2>{{ usuario | nombreCompleto }}</h2>
@@ -105,23 +111,23 @@
 
         <footer>
           <div class="acciones-secundarias">
-            <button *ngIf="usuario.role === 'paciente'" (click)="descargarHistorialPaciente(usuario)">
-              <i class="pi pi-file-excel"></i>
-              Historial Excel
-            </button>
             <button *ngIf="usuario.role === 'especialista' && !usuario.aprobado" 
                     class="positivo"
-                    (click)="aprobarEspecialista(usuario)">
+                    (click)="$event.stopPropagation(); aprobarEspecialista(usuario)">
               <i class="pi pi-check-circle"></i>
               Aprobar especialista
             </button>
+            <div class="indicador-descarga" *ngIf="usuario.role === 'paciente'">
+              <i class="pi pi-download"></i>
+              <span>Seleccioná la tarjeta para descargar turnos</span>
+            </div>
           </div>
           <div class="acciones-estado">
-            <button *ngIf="usuario.activo" class="negativo" (click)="deshabilitarUsuario(usuario)">
+            <button *ngIf="usuario.activo" class="negativo" (click)="$event.stopPropagation(); deshabilitarUsuario(usuario)">
               <i class="pi pi-user-minus"></i>
               Deshabilitar
             </button>
-            <button *ngIf="!usuario.activo" class="positivo" (click)="habilitarUsuario(usuario)">
+            <button *ngIf="!usuario.activo" class="positivo" (click)="$event.stopPropagation(); habilitarUsuario(usuario)">
               <i class="pi pi-user-plus"></i>
               Habilitar
             </button>

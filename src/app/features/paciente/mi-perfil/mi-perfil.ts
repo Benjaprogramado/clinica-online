@@ -60,7 +60,12 @@ export class MiPerfilPacienteComponent implements OnInit {
       return;
     }
 
-    this.usuario.set(usuarioActual);
+    const usuarioNormalizado: Usuario = {
+      ...usuarioActual,
+      ultimoIngreso: this.normalizarFecha(usuarioActual.ultimoIngreso) ?? undefined
+    };
+
+    this.usuario.set(usuarioNormalizado);
     this.loadingService.show();
     this.turnoService.getHistoriasClinicasPorPaciente(usuarioActual.uid).subscribe({
       next: historias => {
@@ -164,5 +169,37 @@ export class MiPerfilPacienteComponent implements OnInit {
 
   cambiarEspecialidad(valor: 'todas' | string): void {
     this.especialidadSeleccionada.set(valor);
+  }
+
+  private normalizarFecha(valor: unknown): Date | undefined {
+    if (!valor) {
+      return undefined;
+    }
+
+    if (valor instanceof Date) {
+      return valor;
+    }
+
+    if (typeof valor === 'number') {
+      return new Date(valor);
+    }
+
+    if (typeof valor === 'string') {
+      const fechaParseada = new Date(valor);
+      return isNaN(fechaParseada.getTime()) ? undefined : fechaParseada;
+    }
+
+    if (typeof (valor as { toDate?: () => Date }).toDate === 'function') {
+      return (valor as { toDate: () => Date }).toDate();
+    }
+
+    const posibleTimestamp = valor as { seconds?: number; nanoseconds?: number };
+    if (typeof posibleTimestamp?.seconds === 'number') {
+      const milisegundos =
+        posibleTimestamp.seconds * 1000 + Math.floor((posibleTimestamp.nanoseconds ?? 0) / 1_000_000);
+      return new Date(milisegundos);
+    }
+
+    return undefined;
   }
 }
