@@ -129,23 +129,22 @@ export class MisTurnosEspecialistaComponent implements OnInit {
 
     if (comentario !== undefined) {
       this.loadingService.show();
+      let exito = false;
       try {
         await this.turnoService.aceptarTurno(turno.id, comentario || '');
-        
-        // Ocultar loading antes de recargar turnos
-        this.loadingService.hide();
-        
-        // Recargar turnos
         await this.cargarTurnosAsync();
-        
-        // Mostrar notificación de éxito después de recargar
+        exito = true;
+      } catch (error) {
+        // Error manejado por el servicio
+      } finally {
+        this.loadingService.hide();
+      }
+
+      if (exito) {
         await this.notificationService.showSuccess(
           'Turno aceptado',
           'El turno ha sido aceptado correctamente.'
         );
-      } catch (error) {
-        // Error manejado por el servicio
-        this.loadingService.hide();
       }
     }
   }
@@ -183,23 +182,22 @@ export class MisTurnosEspecialistaComponent implements OnInit {
 
     if (comentario) {
       this.loadingService.show();
+      let exito = false;
       try {
         await this.turnoService.rechazarTurno(turno.id, comentario);
-        
-        // Ocultar loading antes de recargar turnos
-        this.loadingService.hide();
-        
-        // Recargar turnos
         await this.cargarTurnosAsync();
-        
-        // Mostrar notificación de éxito después de recargar
+        exito = true;
+      } catch (error) {
+        // Error manejado por el servicio
+      } finally {
+        this.loadingService.hide();
+      }
+
+      if (exito) {
         await this.notificationService.showSuccess(
           'Turno rechazado',
           'El turno ha sido rechazado correctamente.'
         );
-      } catch (error) {
-        // Error manejado por el servicio
-        this.loadingService.hide();
       }
     }
   }
@@ -235,23 +233,22 @@ export class MisTurnosEspecialistaComponent implements OnInit {
 
     if (resultado.isConfirmed) {
       this.loadingService.show();
+      let exito = false;
       try {
         await this.turnoService.cancelarTurno(turno.id, 'Cancelado por el especialista');
-        
-        // Ocultar loading antes de recargar turnos
-        this.loadingService.hide();
-        
-        // Recargar turnos
         await this.cargarTurnosAsync();
-        
-        // Mostrar notificación de éxito después de recargar
+        exito = true;
+      } catch (error) {
+        // Error manejado por el servicio
+      } finally {
+        this.loadingService.hide();
+      }
+
+      if (exito) {
         await this.notificationService.showSuccess(
           'Turno cancelado',
           'El turno ha sido cancelado correctamente.'
         );
-      } catch (error) {
-        // Error manejado por el servicio
-        this.loadingService.hide();
       }
     }
   }
@@ -279,17 +276,22 @@ export class MisTurnosEspecialistaComponent implements OnInit {
     }
 
     this.loadingService.show();
+    let exito = false;
     try {
       await this.turnoService.registrarHistoriaClinica(turno.id, historiaClinica);
-      await this.notificationService.showSuccess(
-        'Historia clínica registrada',
-        'La historia clínica se guardó correctamente y el turno quedó pendiente de reseña.'
-      );
       await this.cargarTurnosAsync();
+      exito = true;
     } catch (error) {
       // El servicio ya maneja la notificación de error
     } finally {
       this.loadingService.hide();
+    }
+
+    if (exito) {
+      await this.notificationService.showSuccess(
+        'Historia clínica registrada',
+        'La historia clínica se guardó correctamente y el turno quedó pendiente de reseña.'
+      );
     }
   }
 
