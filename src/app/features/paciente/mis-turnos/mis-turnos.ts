@@ -41,7 +41,15 @@ export class MisTurnosPacienteComponent implements OnInit {
       resultado = resultado.filter(t =>
         t.especialistaNombre.toLowerCase().includes(texto) ||
         t.especialistaApellido.toLowerCase().includes(texto) ||
-        t.especialidad.toLowerCase().includes(texto)
+        t.especialidad.toLowerCase().includes(texto) ||
+        t.historiaClinica?.comentarioDiagnostico?.toLowerCase().includes(texto) ||
+        `${t.historiaClinica?.altura ?? ''}`.toLowerCase().includes(texto) ||
+        `${t.historiaClinica?.peso ?? ''}`.toLowerCase().includes(texto) ||
+        `${t.historiaClinica?.temperatura ?? ''}`.toLowerCase().includes(texto) ||
+        t.historiaClinica?.presion?.toLowerCase().includes(texto) ||
+        !!t.historiaClinica?.datosDinamicos?.some(dato =>
+          `${dato.clave} ${dato.valor}`.toLowerCase().includes(texto)
+        )
       );
     }
 
@@ -243,5 +251,45 @@ export class MisTurnosPacienteComponent implements OnInit {
       'resena-pendiente': 'Pendiente de reseña'
     };
     return textos[estado] || estado;
+  }
+
+  async verHistoriaClinica(turno: Turno) {
+    if (!turno.historiaClinica) {
+      await this.notificationService.showInfo(
+        'Sin historia clínica',
+        'Aún no se registró la historia clínica para este turno.'
+      );
+      return;
+    }
+
+    const historia = turno.historiaClinica;
+    const datosExtra = historia.datosDinamicos?.length
+      ? `<ul class="historia-extra-list">
+          ${historia.datosDinamicos
+            .map(dato => `<li><strong>${dato.clave}:</strong> ${dato.valor}</li>`)
+            .join('')}
+        </ul>`
+      : '<p class="historia-extra-vacio">Sin datos adicionales.</p>';
+
+    await Swal.fire({
+      title: 'Historia clínica de la atención',
+      html: `
+        <div class="historia-clinica-detalle">
+          <p><strong>Especialidad:</strong> ${historia.especialidad}</p>
+          <p><strong>Profesional:</strong> ${historia.especialistaNombre} ${historia.especialistaApellido}</p>
+          <p><strong>Fecha:</strong> ${new Date(historia.fechaAtencion).toLocaleString('es-AR')}</p>
+          <p><strong>Altura:</strong> ${historia.altura} cm</p>
+          <p><strong>Peso:</strong> ${historia.peso} kg</p>
+          <p><strong>Temperatura:</strong> ${historia.temperatura} °C</p>
+          <p><strong>Presión:</strong> ${historia.presion}</p>
+          <p><strong>Diagnóstico / Comentario:</strong> ${historia.comentarioDiagnostico || '—'}</p>
+          <div>
+            <strong>Datos adicionales:</strong>
+            ${datosExtra}
+          </div>
+        </div>
+      `,
+      confirmButtonColor: '#00adb5'
+    });
   }
 }

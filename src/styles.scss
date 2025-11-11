@@ -81,6 +81,151 @@ textarea {
   }
 }
 
+.swal-dark-popup {
+  background: rgba(10, 22, 38, 0.96) !important;
+  border: 1px solid rgba(0, 173, 181, 0.35);
+  border-radius: 24px !important;
+  color: #f6fbff !important;
+  backdrop-filter: blur(18px);
+
+  .swal2-title {
+    color: #ffffff !important;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .swal2-html-container {
+    color: rgba(246, 251, 255, 0.92) !important;
+  }
+
+  .historia-formulario {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    color: #f6fbff;
+    strong {
+      color: #f6fbff !important;
+    }
+
+    .descripcion {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: rgba(246, 251, 255, 0.95) !important;
+      background: rgba(17, 36, 58, 0.9);
+      border: 1px solid rgba(0, 173, 181, 0.38);
+      border-radius: 16px;
+      padding: 1.1rem 1.35rem;
+      box-shadow: 0 16px 36px rgba(0, 173, 181, 0.18);
+    }
+
+    .historia-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.2rem 1rem;
+
+      @media (max-width: 540px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .campo {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+
+      label {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.97) !important;
+        text-transform: uppercase;
+        letter-spacing: 0.045em;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.8rem 0.95rem;
+        border-radius: 12px;
+        background: rgba(9, 24, 40, 0.94);
+        border: 1px solid rgba(0, 212, 255, 0.45);
+        color: #f6fbff;
+        font-size: 0.95rem;
+        transition: border 0.2s ease, box-shadow 0.2s ease;
+
+        &:focus {
+          outline: none;
+          border-color: #00f0ff;
+          box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.3);
+        }
+
+        &::placeholder {
+          color: rgba(26, 32, 42, 0.38);
+        }
+
+        &:disabled {
+          background: rgba(9, 24, 40, 0.65);
+          color: rgba(246, 251, 255, 0.65);
+        }
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+
+      input[type='number'] {
+        appearance: textfield;
+      }
+
+      input[type='number']::-webkit-inner-spin-button,
+      input[type='number']::-webkit-outer-spin-button {
+        appearance: none;
+        margin: 0;
+      }
+    }
+
+    .datos-dinamicos {
+      background: rgba(14, 32, 52, 0.92);
+      border: 1px solid rgba(0, 173, 181, 0.38);
+      border-radius: 16px;
+      padding: 1.25rem 1.35rem;
+      box-shadow: 0 14px 30px rgba(0, 173, 181, 0.14);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+
+      label {
+        font-size: 0.84rem;
+        letter-spacing: 0.055em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.95) !important;
+        font-weight: 700;
+      }
+
+      .dato-dinamico {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.85rem;
+
+        input {
+          background: rgba(247, 250, 255, 0.98) !important;
+          border: 1px solid rgba(0, 212, 255, 0.45) !important;
+          color: rgba(18, 26, 36, 0.85) !important;
+
+          &::placeholder {
+            color: rgba(18, 26, 36, 0.5) !important;
+          }
+        }
+
+        @media (max-width: 540px) {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+  }
+}
+
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -154,25 +299,26 @@ textarea {
 
 // Popup oscuro para SweetAlert
 .swal-dark-popup {
-  background: #1a1a2e !important;
-  color: #eee !important;
-  
-  .swal2-title {
-    color: #eee !important;
+  background: rgba(10, 22, 38, 0.96) !important;
+  color: #f6fbff !important;
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(0, 173, 181, 0.35);
+
+  .swal2-title,
+  .swal-dark-title {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em;
   }
-  
+
   .swal2-content {
-    color: #bbb !important;
-  }
-
-  .swal-dark-title,
-  .swal-dark-label {
-    color: #333 !important;
-    font-weight: 600 !important;
+    color: rgba(246, 251, 255, 0.92) !important;
   }
 
   .swal-dark-label {
+    color: #ffffff !important;
     font-size: 1rem !important;
+    font-weight: 600 !important;
   }
 
   .swal-dark-input {

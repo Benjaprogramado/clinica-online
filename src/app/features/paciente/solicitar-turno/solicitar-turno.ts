@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
@@ -22,7 +22,7 @@ interface TurnoDisponible {
 @Component({
   selector: 'app-solicitar-turno',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DatePipe, RecaptchaComponent, EspecialidadImagenPipe],
+  imports: [CommonModule, ReactiveFormsModule, RecaptchaComponent, EspecialidadImagenPipe],
   templateUrl: './solicitar-turno.html',
   styleUrl: './solicitar-turno.scss'
 })

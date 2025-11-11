@@ -1,0 +1,85 @@
+<div class="pacientes-especialista">
+  <div class="cabecera">
+    <div>
+      <h1>Pacientes atendidos</h1>
+      <p class="descripcion">
+        Visualiza los pacientes con los que ya registraste al menos una historia clínica. Selecciona
+        un turno para revisar los detalles de la atención.
+      </p>
+    </div>
+    <div class="buscador">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        placeholder="Buscar por nombre, email, DNI u obra social..."
+        (input)="onBuscar($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  @if (pacientesFiltrados().length === 0) {
+    <div class="estado-vacio">
+      <i class="pi pi-users"></i>
+      <p>No se encontraron pacientes con atenciones registradas.</p>
+    </div>
+  } @else {
+    <div class="grid-pacientes">
+      @for (paciente of pacientesFiltrados(); track paciente.pacienteId) {
+        <div class="tarjeta-paciente">
+          <div class="tarjeta-header">
+            <div class="identidad">
+              <h2>{{ paciente.pacienteNombre }} {{ paciente.pacienteApellido }}</h2>
+              <span class="email">{{ paciente.pacienteEmail }}</span>
+            </div>
+            <div class="detalles">
+              @if (paciente.pacienteDNI) {
+                <span>
+                  <i class="pi pi-id-card"></i>
+                  DNI {{ paciente.pacienteDNI }}
+                </span>
+              }
+              @if (paciente.pacienteObraSocial) {
+                <span>
+                  <i class="pi pi-briefcase"></i>
+                  {{ paciente.pacienteObraSocial }}
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="turnos">
+            <h3>Últimas atenciones</h3>
+            <ul>
+              @for (turno of paciente.ultimosTurnos; track turno.id) {
+                <li>
+                  <div class="turno-info">
+                    <span class="fecha">
+                      {{ turno.fecha | date:'dd/MM/yyyy' }} • {{ turno.hora }}
+                    </span>
+                    <span class="especialidad">{{ turno.especialidad }}</span>
+                    <span class="profesional">
+                      <i class="pi pi-user-md"></i>
+                      {{ turno.especialistaNombre }} {{ turno.especialistaApellido }}
+                    </span>
+                  </div>
+                  <div class="acciones-turno">
+                    <span class="estado" [ngClass]="turno.estado">{{ turno.estado }}</span>
+                    @if (turno.historiaClinica) {
+                      <button type="button" (click)="verHistoria(turno)">
+                        <i class="pi pi-file-edit"></i>
+                        Ver historia
+                      </button>
+                    } @else {
+                      <span class="sin-historia">Sin historia clínica</span>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+

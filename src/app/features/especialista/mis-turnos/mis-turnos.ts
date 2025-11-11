@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 import { TurnoService } from '../../../core/services/turno';
-import { Turno, EstadoTurno, FiltroTurnos } from '../../../core/models/turno.model';
+import { Turno, EstadoTurno, FiltroTurnos, HistoriaClinicaPayload } from '../../../core/models/turno.model';
 import { LoadingService } from '../../../core/services/loading';
 import { NotificationService } from '../../../core/services/notification';
 import Swal from 'sweetalert2';
@@ -41,7 +41,15 @@ export class MisTurnosEspecialistaComponent implements OnInit {
       resultado = resultado.filter(t =>
         t.pacienteNombre.toLowerCase().includes(texto) ||
         t.pacienteApellido.toLowerCase().includes(texto) ||
-        t.pacienteDNI.includes(texto)
+        t.pacienteDNI.includes(texto) ||
+        t.historiaClinica?.comentarioDiagnostico?.toLowerCase().includes(texto) ||
+        `${t.historiaClinica?.altura ?? ''}`.toLowerCase().includes(texto) ||
+        `${t.historiaClinica?.peso ?? ''}`.toLowerCase().includes(texto) ||
+        `${t.historiaClinica?.temperatura ?? ''}`.toLowerCase().includes(texto) ||
+        t.historiaClinica?.presion?.toLowerCase().includes(texto) ||
+        !!t.historiaClinica?.datosDinamicos?.some(dato =>
+          `${dato.clave} ${dato.valor}`.toLowerCase().includes(texto)
+        )
       );
     }
 
@@ -249,38 +257,75 @@ export class MisTurnosEspecialistaComponent implements OnInit {
   }
 
   async finalizarTurno(turno: Turno) {
-    const resultado = await Swal.fire({
-      title: '¿Finalizar turno?',
-      text: 'Una vez finalizado, el paciente podrá dejar una reseña.',
-      icon: 'question',
+    const { value: historiaClinica } = await Swal.fire<HistoriaClinicaPayload>({
+      title: 'Registrar historia clínica',
+      html: this.crearFormularioHistoriaClinica(turno),
+      focusConfirm: false,
       showCancelButton: true,
+      confirmButtonText: 'Guardar historia',
+      cancelButtonText: 'Cancelar',
       confirmButtonColor: '#00adb5',
       cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Sí, finalizar',
-      cancelButtonText: 'Cancelar'
+      customClass: {
+        popup: 'swal-dark-popup',
+        title: 'swal-dark-title',
+        htmlContainer: 'swal-dark-container'
+      },
+      preConfirm: () => this.obtenerHistoriaDesdeFormulario()
     });
 
-    if (resultado.isConfirmed) {
-      this.loadingService.show();
-      try {
-        await this.turnoService.finalizarTurno(turno.id);
-        
-        // Ocultar loading antes de recargar turnos
-        this.loadingService.hide();
-        
-        // Recargar turnos
-        await this.cargarTurnosAsync();
-        
-        // Mostrar notificación de éxito después de recargar
-        await this.notificationService.showSuccess(
-          'Turno finalizado',
-          'El turno ha sido finalizado. El paciente podrá dejar una reseña.'
-        );
-      } catch (error) {
-        // Error manejado por el servicio
-        this.loadingService.hide();
-      }
+    if (!historiaClinica) {
+      return;
     }
+
+    this.loadingService.show();
+    try {
+      await this.turnoService.registrarHistoriaClinica(turno.id, historiaClinica);
+      await this.notificationService.showSuccess(
+        'Historia clínica registrada',
+        'La historia clínica se guardó correctamente y el turno quedó pendiente de reseña.'
+      );
+      await this.cargarTurnosAsync();
+    } catch (error) {
+      // El servicio ya maneja la notificación de error
+    } finally {
+      this.loadingService.hide();
+    }
+  }
+
+  async verHistoriaClinica(turno: Turno) {
+    if (!turno.historiaClinica) {
+      return;
+    }
+
+    const historia = turno.historiaClinica;
+    const datosExtra = historia.datosDinamicos?.length
+      ? `<ul class="historia-extra-list">
+          ${historia.datosDinamicos
+            .map(dato => `<li><strong>${dato.clave}:</strong> ${dato.valor}</li>`)
+            .join('')}
+        </ul>`
+      : '<p class="historia-extra-vacio">Sin datos adicionales.</p>';
+
+    await Swal.fire({
+      title: 'Historia clínica registrada',
+      html: `
+        <div class="historia-clinica-detalle">
+          <p><strong>Fecha de atención:</strong> ${new Date(historia.fechaAtencion).toLocaleString('es-AR')}</p>
+          <p><strong>Altura:</strong> ${historia.altura} cm</p>
+          <p><strong>Peso:</strong> ${historia.peso} kg</p>
+          <p><strong>Temperatura:</strong> ${historia.temperatura} °C</p>
+          <p><strong>Presión:</strong> ${historia.presion}</p>
+          <p><strong>Diagnóstico / Comentario:</strong> ${historia.comentarioDiagnostico || '—'}</p>
+          <div>
+            <strong>Datos adicionales:</strong>
+            ${datosExtra}
+          </div>
+        </div>
+      `,
+      icon: 'info',
+      confirmButtonColor: '#00adb5'
+    });
   }
 
   obtenerColorEstado(estado: EstadoTurno): string {
@@ -305,5 +350,106 @@ export class MisTurnosEspecialistaComponent implements OnInit {
       'resena-pendiente': 'Pendiente de reseña'
     };
     return textos[estado] || estado;
+  }
+
+  private crearFormularioHistoriaClinica(turno: Turno): string {
+    const extras = turno.historiaClinica?.datosDinamicos || [];
+
+    return `
+      <div class="historia-formulario">
+        <p class="descripcion">
+          Completa los datos de la atención del paciente ${turno.pacienteNombre} ${turno.pacienteApellido}.
+        </p>
+        <div class="historia-grid">
+          <div class="campo">
+            <label for="historia-altura">Altura (cm)</label>
+            <input id="historia-altura" type="number" min="0" step="0.1" value="${turno.historiaClinica?.altura ?? ''}" />
+          </div>
+          <div class="campo">
+            <label for="historia-peso">Peso (kg)</label>
+            <input id="historia-peso" type="number" min="0" step="0.1" value="${turno.historiaClinica?.peso ?? ''}" />
+          </div>
+          <div class="campo">
+            <label for="historia-temperatura">Temperatura (°C)</label>
+            <input id="historia-temperatura" type="number" min="0" step="0.1" value="${turno.historiaClinica?.temperatura ?? ''}" />
+          </div>
+          <div class="campo">
+            <label for="historia-presion">Presión</label>
+            <input id="historia-presion" type="text" placeholder="Ej: 120/80" value="${turno.historiaClinica?.presion ?? ''}" />
+          </div>
+        </div>
+        <div class="campo">
+          <label for="historia-diagnostico">Diagnóstico / Comentarios</label>
+          <textarea id="historia-diagnostico" rows="3" placeholder="Describe el diagnóstico o comentarios relevantes...">${turno.historiaClinica?.comentarioDiagnostico ?? ''}</textarea>
+        </div>
+        <div class="datos-dinamicos">
+          <label>Datos adicionales (opcional, máximo 3)</label>
+          ${[1, 2, 3].map(index => `
+            <div class="dato-dinamico">
+              <input id="historia-extra-clave-${index}" type="text" placeholder="Clave" value="${extras[index - 1]?.clave || ''}"/>
+              <input id="historia-extra-valor-${index}" type="text" placeholder="Valor" value="${extras[index - 1]?.valor || ''}"/>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  private obtenerHistoriaDesdeFormulario(): HistoriaClinicaPayload | false {
+    const altura = Number((document.getElementById('historia-altura') as HTMLInputElement)?.value);
+    const peso = Number((document.getElementById('historia-peso') as HTMLInputElement)?.value);
+    const temperatura = Number((document.getElementById('historia-temperatura') as HTMLInputElement)?.value);
+    const presion = (document.getElementById('historia-presion') as HTMLInputElement)?.value?.trim();
+    const comentarioDiagnostico = (document.getElementById('historia-diagnostico') as HTMLTextAreaElement)?.value?.trim();
+
+    if (!altura || altura <= 0) {
+      Swal.showValidationMessage('Debes ingresar la altura del paciente en centímetros.');
+      return false;
+    }
+
+    if (!peso || peso <= 0) {
+      Swal.showValidationMessage('Debes ingresar el peso del paciente en kilogramos.');
+      return false;
+    }
+
+    if (!temperatura || temperatura <= 0) {
+      Swal.showValidationMessage('Debes ingresar la temperatura del paciente.');
+      return false;
+    }
+
+    if (!presion) {
+      Swal.showValidationMessage('Debes ingresar la presión arterial del paciente.');
+      return false;
+    }
+
+    const datosDinamicos: { clave: string; valor: string }[] = [];
+    let datosValidos = true;
+
+    [1, 2, 3].forEach(index => {
+      const clave = (document.getElementById(`historia-extra-clave-${index}`) as HTMLInputElement)?.value?.trim();
+      const valor = (document.getElementById(`historia-extra-valor-${index}`) as HTMLInputElement)?.value?.trim();
+
+      if ((clave && !valor) || (!clave && valor)) {
+        datosValidos = false;
+        Swal.showValidationMessage('Cada dato adicional debe tener una clave y un valor.');
+      }
+
+      if (clave && valor) {
+        datosDinamicos.push({ clave, valor });
+      }
+    });
+
+    if (!datosValidos) {
+      return false;
+    }
+
+    return {
+      altura,
+      peso,
+      temperatura,
+      presion,
+      comentarioDiagnostico: comentarioDiagnostico || undefined,
+      datosDinamicos
+    };
   }
 }

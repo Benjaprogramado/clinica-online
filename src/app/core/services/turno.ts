@@ -18,7 +18,7 @@ import {
 } from '@angular/fire/firestore';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Turno, EstadoTurno, FiltroTurnos } from '../models/turno.model';
+import { Turno, EstadoTurno, FiltroTurnos, HistoriaClinica, HistoriaClinicaPayload, PacienteAtendidoPorEspecialista, HistoriaClinicaDato } from '../models/turno.model';
 import { NotificationService } from './notification';
 
 @Injectable({
@@ -320,6 +320,73 @@ export class TurnoService {
   }
 
   /**
+   * Registra la historia clínica asociada a un turno finalizado
+   */
+  async registrarHistoriaClinica(turnoId: string, payload: HistoriaClinicaPayload): Promise<void> {
+    if (!payload.presion || !payload.presion.trim()) {
+      await this.notificationService.showError(
+        'Datos incompletos',
+        'Debes completar la presión arterial del paciente.'
+      );
+      throw new Error('Presión arterial requerida');
+    }
+
+    const datosDinamicosSanitizados = (payload.datosDinamicos || [])
+      .filter(dato => dato?.clave?.trim() && dato?.valor?.trim())
+      .slice(0, 3)
+      .map((dato): HistoriaClinicaDato => ({
+        clave: dato.clave.trim(),
+        valor: dato.valor.trim()
+      }));
+
+    try {
+      const turnoDocRef = doc(this.firestore, `turnos/${turnoId}`);
+      const turnoSnap = await getDoc(turnoDocRef);
+
+      if (!turnoSnap.exists()) {
+        throw new Error('El turno seleccionado no existe.');
+      }
+
+      const turno = this.convertirTurnoDesdeFirestore(turnoSnap.id, turnoSnap.data());
+
+      const historiaClinica: HistoriaClinica = {
+        turnoId,
+        pacienteId: turno.pacienteId,
+        pacienteNombre: turno.pacienteNombre,
+        pacienteApellido: turno.pacienteApellido,
+        especialistaId: turno.especialistaId,
+        especialistaNombre: turno.especialistaNombre,
+        especialistaApellido: turno.especialistaApellido,
+        especialidad: turno.especialidad,
+        fechaAtencion: turno.fecha,
+        altura: Number(payload.altura),
+        peso: Number(payload.peso),
+        temperatura: Number(payload.temperatura),
+        presion: payload.presion.trim(),
+        datosDinamicos: datosDinamicosSanitizados,
+        comentarioDiagnostico: payload.comentarioDiagnostico?.trim() || undefined
+      };
+
+      const fechaAtencionTimestamp = turno.fechaTimestamp || Timestamp.fromDate(turno.fecha);
+
+      await updateDoc(turnoDocRef, {
+        historiaClinica: {
+          ...historiaClinica,
+          fechaAtencionTimestamp
+        },
+        estado: 'resena-pendiente',
+        fechaModificacionTimestamp: serverTimestamp()
+      });
+    } catch (error: any) {
+      await this.notificationService.showError(
+        'Error al guardar historia clínica',
+        error.message || 'Ocurrió un error al registrar la historia clínica.'
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Guarda una reseña (Paciente)
    */
   async guardarResena(turnoId: string, calificacion: number, comentario: string): Promise<void> {
@@ -388,6 +455,40 @@ export class TurnoService {
       fecha = new Date(2000, 0, 1);
     }
 
+    const historiaClinicaRaw = data.historiaClinica;
+    let historiaClinica: HistoriaClinica | undefined;
+
+    if (historiaClinicaRaw) {
+      const historiaTimestamp = historiaClinicaRaw.fechaAtencionTimestamp as Timestamp;
+      const datosDinamicos: HistoriaClinicaDato[] = Array.isArray(historiaClinicaRaw.datosDinamicos)
+        ? historiaClinicaRaw.datosDinamicos
+            .filter((dato: any) => dato?.clave && dato?.valor)
+            .map((dato: any) => ({
+              clave: dato.clave,
+              valor: dato.valor
+            }))
+        : [];
+
+      historiaClinica = {
+        turnoId: historiaClinicaRaw.turnoId || id,
+        pacienteId: historiaClinicaRaw.pacienteId || data.pacienteId,
+        pacienteNombre: historiaClinicaRaw.pacienteNombre || data.pacienteNombre,
+        pacienteApellido: historiaClinicaRaw.pacienteApellido || data.pacienteApellido,
+        especialistaId: historiaClinicaRaw.especialistaId || data.especialistaId,
+        especialistaNombre: historiaClinicaRaw.especialistaNombre || data.especialistaNombre,
+        especialistaApellido: historiaClinicaRaw.especialistaApellido || data.especialistaApellido,
+        especialidad: historiaClinicaRaw.especialidad || data.especialidad,
+        fechaAtencion: historiaTimestamp?.toDate() || fecha,
+        fechaAtencionTimestamp: historiaTimestamp,
+        altura: Number(historiaClinicaRaw.altura) || 0,
+        peso: Number(historiaClinicaRaw.peso) || 0,
+        temperatura: Number(historiaClinicaRaw.temperatura) || 0,
+        presion: historiaClinicaRaw.presion,
+        datosDinamicos,
+        comentarioDiagnostico: historiaClinicaRaw.comentarioDiagnostico
+      };
+    }
+
     return {
       id,
       pacienteId: data.pacienteId,
@@ -413,10 +514,97 @@ export class TurnoService {
         fecha: resenaFechaTimestamp?.toDate() || new Date(),
         fechaTimestamp: resenaFechaTimestamp
       } : undefined,
+      historiaClinica,
       fechaCreacion: fechaCreacionTimestamp?.toDate() || new Date(),
       fechaModificacion: fechaModificacionTimestamp?.toDate(),
       fechaCreacionTimestamp,
       fechaModificacionTimestamp
+    };
+  }
+
+  /**
+   * Historias clínicas de un paciente
+   */
+  getHistoriasClinicasPorPaciente(pacienteId: string): Observable<HistoriaClinica[]> {
+    return this.getTurnosPorPaciente(pacienteId).pipe(
+      map(turnos =>
+        turnos
+          .filter(turno => !!turno.historiaClinica)
+          .map(turno => this.normalizarHistoriaClinica(turno))
+          .filter((historia): historia is HistoriaClinica => !!historia)
+      )
+    );
+  }
+
+  /**
+   * Historias clínicas atendidas por un especialista
+   */
+  getHistoriasClinicasPorEspecialista(especialistaId: string): Observable<HistoriaClinica[]> {
+    return this.getTurnosPorEspecialista(especialistaId).pipe(
+      map(turnos =>
+        turnos
+          .filter(turno => !!turno.historiaClinica)
+          .map(turno => this.normalizarHistoriaClinica(turno))
+          .filter((historia): historia is HistoriaClinica => !!historia)
+      )
+    );
+  }
+
+  /**
+   * Pacientes atendidos por un especialista (últimos 3 turnos)
+   */
+  getPacientesAtendidosPorEspecialista(especialistaId: string): Observable<PacienteAtendidoPorEspecialista[]> {
+    return this.getTurnosPorEspecialista(especialistaId).pipe(
+      map(turnos => {
+        const turnosConHistoria = turnos.filter(turno => !!turno.historiaClinica);
+
+        const agrupados = turnosConHistoria.reduce((acumulador, turno) => {
+          const existentes = acumulador.get(turno.pacienteId) ?? [];
+          existentes.push(turno);
+          acumulador.set(turno.pacienteId, existentes);
+          return acumulador;
+        }, new Map<string, Turno[]>());
+
+        return Array.from(agrupados.values()).map(turnosPaciente => {
+          const ordenados = [...turnosPaciente].sort((a, b) => {
+            const fechaA = a.fechaTimestamp?.toMillis?.() ?? 0;
+            const fechaB = b.fechaTimestamp?.toMillis?.() ?? 0;
+            return fechaB - fechaA;
+          });
+
+          const referencia = ordenados[0];
+
+          return {
+            pacienteId: referencia.pacienteId,
+            pacienteNombre: referencia.pacienteNombre,
+            pacienteApellido: referencia.pacienteApellido,
+            pacienteEmail: referencia.pacienteEmail,
+            pacienteDNI: referencia.pacienteDNI,
+            pacienteObraSocial: referencia.pacienteObraSocial,
+            ultimosTurnos: ordenados.slice(0, 3)
+          };
+        });
+      })
+    );
+  }
+
+  private normalizarHistoriaClinica(turno: Turno): HistoriaClinica | undefined {
+    if (!turno.historiaClinica) {
+      return undefined;
+    }
+
+    return {
+      ...turno.historiaClinica,
+      fechaAtencion: turno.historiaClinica.fechaAtencion || turno.fecha,
+      fechaAtencionTimestamp: turno.historiaClinica.fechaAtencionTimestamp || turno.fechaTimestamp,
+      turnoId: turno.historiaClinica.turnoId || turno.id,
+      pacienteId: turno.historiaClinica.pacienteId || turno.pacienteId,
+      pacienteNombre: turno.historiaClinica.pacienteNombre || turno.pacienteNombre,
+      pacienteApellido: turno.historiaClinica.pacienteApellido || turno.pacienteApellido,
+      especialistaId: turno.historiaClinica.especialistaId || turno.especialistaId,
+      especialistaNombre: turno.historiaClinica.especialistaNombre || turno.especialistaNombre,
+      especialistaApellido: turno.historiaClinica.especialistaApellido || turno.especialistaApellido,
+      especialidad: turno.historiaClinica.especialidad || turno.especialidad
     };
   }
 }

@@ -1,0 +1,227 @@
+.pacientes-especialista {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  .cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1.5rem;
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .descripcion {
+      color: rgba(255, 255, 255, 0.7);
+      max-width: 520px;
+    }
+
+    .buscador {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      background: rgba(0, 173, 181, 0.1);
+      border: 1px solid rgba(0, 173, 181, 0.25);
+
+      i {
+        color: #00adb5;
+      }
+
+      input {
+        background: transparent;
+        border: none;
+        color: #f1f5f9;
+        width: 260px;
+
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        &:focus {
+          outline: none;
+        }
+      }
+    }
+  }
+
+  .estado-vacio {
+    text-align: center;
+    padding: 3rem;
+    border-radius: 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.65);
+
+    i {
+      display: block;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #00adb5;
+    }
+  }
+
+  .grid-pacientes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .tarjeta-paciente {
+    border-radius: 16px;
+    padding: 1.5rem;
+    background: rgba(13, 27, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    box-shadow: 0 10px 30px rgba(13, 27, 42, 0.25);
+
+    .tarjeta-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+
+      .identidad {
+        h2 {
+          font-size: 1.35rem;
+          margin: 0;
+        }
+
+        .email {
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 0.9rem;
+        }
+      }
+
+      .detalles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        font-size: 0.9rem;
+
+        span {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.35rem 0.6rem;
+          border-radius: 8px;
+          background: rgba(0, 173, 181, 0.12);
+          border: 1px solid rgba(0, 173, 181, 0.25);
+          color: #00e0e8;
+        }
+      }
+    }
+
+    .turnos {
+      h3 {
+        font-size: 1.05rem;
+        margin-bottom: 0.75rem;
+      }
+
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+
+        li {
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+          padding: 0.75rem 1rem;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+
+          .turno-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+
+            .fecha {
+              font-weight: 600;
+            }
+
+            .especialidad {
+              color: #00adb5;
+              font-weight: 600;
+            }
+
+            .profesional {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.35rem;
+              color: rgba(255, 255, 255, 0.7);
+            }
+          }
+
+          .acciones-turno {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+
+            .estado {
+              text-transform: capitalize;
+              font-size: 0.75rem;
+              letter-spacing: 0.02em;
+              padding: 0.25rem 0.6rem;
+              border-radius: 999px;
+              background: rgba(0, 173, 181, 0.15);
+              color: #00f0ff;
+
+              &.pendiente {
+                background: rgba(255, 193, 7, 0.15);
+                color: #ffc107;
+              }
+
+              &.rechazado,
+              &.cancelado {
+                background: rgba(220, 53, 69, 0.15);
+                color: #ff7080;
+              }
+
+              &.realizado {
+                background: rgba(40, 167, 69, 0.15);
+                color: #69ffb2;
+              }
+            }
+
+            button {
+              border: none;
+              border-radius: 999px;
+              padding: 0.35rem 0.85rem;
+              background: #00adb5;
+              color: #0d1b2a;
+              font-weight: 600;
+              display: inline-flex;
+              align-items: center;
+              gap: 0.35rem;
+              cursor: pointer;
+              transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+              &:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 8px 16px rgba(0, 173, 181, 0.25);
+              }
+            }
+
+            .sin-historia {
+              font-size: 0.85rem;
+              font-style: italic;
+              color: rgba(255, 255, 255, 0.5);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

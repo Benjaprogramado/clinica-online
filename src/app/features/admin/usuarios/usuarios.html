@@ -2,10 +2,16 @@
   <div class="header">
     <div class="header-title">
       <h1>Gestión de Usuarios</h1>
-      <button class="btn-nuevo-usuario" (click)="toggleFormulario()">
-        <i class="pi pi-plus"></i>
-        {{ mostrarFormulario() ? 'Cancelar' : 'Nuevo Usuario' }}
-      </button>
+      <div class="acciones-header">
+        <button class="btn-exportar" (click)="descargarUsuariosExcel()">
+          <i class="pi pi-download"></i>
+          Exportar Excel general
+        </button>
+        <button class="btn-nuevo-usuario" (click)="toggleFormulario()">
+          <i class="pi pi-plus"></i>
+          {{ mostrarFormulario() ? 'Cancelar' : 'Nuevo Usuario' }}
+        </button>
+      </div>
     </div>
     
     <div class="filtros">
@@ -58,76 +64,76 @@
     </div>
   </div>
 
-  <div class="table-container" *ngIf="!cargando()">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Rol</th>
-          <th>Estado</th>
-          <th>Especialidades</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let usuario of filtrarUsuarios()" [class.inactive]="!usuario.activo">
-          <td>
-            <span *ngIf="usuario.nombre && usuario.apellido">{{ usuario.nombre }} {{ usuario.apellido }}</span>
-            <span *ngIf="!usuario.nombre || !usuario.apellido" class="text-muted">
-              {{ usuario.email || usuario.uid || 'Sin nombre' }}
-            </span>
-          </td>
-          <td>{{ usuario.email || 'Sin email' }}</td>
-          <td>
-            <span class="badge" [class.badge-paciente]="usuario.role === 'paciente'"
-                             [class.badge-especialista]="usuario.role === 'especialista'"
-                             [class.badge-admin]="usuario.role === 'administrador'">
-              {{ usuario.role }}
-            </span>
-          </td>
-          <td>
-            <span class="badge" [class.badge-ok]="usuario.activo && (usuario.aprobado !== false)"
-                             [class.badge-warning]="!usuario.activo || !usuario.aprobado">
-              <span *ngIf="usuario.role === 'especialista'">
+  <div class="grid-usuarios" *ngIf="!cargando() && filtrarUsuarios().length > 0">
+    @for (usuario of filtrarUsuarios(); track usuario.uid) {
+      <article class="usuario-card" appHoverElevate [class.inactivo]="!usuario.activo">
+        <header>
+          <div class="identidad">
+            <h2>{{ usuario | nombreCompleto }}</h2>
+            <span class="email">{{ usuario.email || 'Sin email' }}</span>
+          </div>
+          <div class="badges">
+            <span [appRoleBadge]="usuario.role">{{ usuario.role }}</span>
+            <span class="badge estado" [class.ok]="usuario.activo && (usuario.aprobado !== false)"
+                                      [class.warning]="!usuario.activo || usuario.aprobado === false">
+              <ng-container *ngIf="usuario.role === 'especialista'; else estadoUsuario">
                 {{ usuario.aprobado ? 'Aprobado' : 'Pendiente' }}
-              </span>
-              <span *ngIf="usuario.role !== 'especialista'">
+              </ng-container>
+              <ng-template #estadoUsuario>
                 {{ usuario.activo ? 'Activo' : 'Inactivo' }}
-              </span>
+              </ng-template>
             </span>
-          </td>
-          <td>
-            <div *ngIf="usuario.especialidades && usuario.especialidades.length > 0" class="especialidades">
-              <span *ngFor="let esp of usuario.especialidades" class="badge badge-small">{{ esp }}</span>
+          </div>
+        </header>
+
+        <section class="datos">
+          <div class="dato" *ngIf="usuario.dni">
+            <span class="label">DNI</span>
+            <span class="valor">{{ usuario.dni }}</span>
+          </div>
+          <div class="dato" *ngIf="usuario.obraSocial">
+            <span class="label">Obra social</span>
+            <span class="valor">{{ usuario.obraSocial }}</span>
+          </div>
+          <div class="dato" *ngIf="usuario.especialidades?.length">
+            <span class="label">Especialidades</span>
+            <div class="especialidades">
+              <span class="chip" *ngFor="let esp of usuario.especialidades">{{ esp }}</span>
             </div>
-          </td>
-          <td class="acciones">
-            <button *ngIf="usuario.role === 'especialista' && !usuario.aprobado" 
-                    class="btn btn-success btn-sm"
-                    (click)="aprobarEspecialista(usuario)">
-              Aprobar
+          </div>
+        </section>
+
+        <footer>
+          <div class="acciones-secundarias">
+            <button *ngIf="usuario.role === 'paciente'" (click)="descargarHistorialPaciente(usuario)">
+              <i class="pi pi-file-excel"></i>
+              Historial Excel
             </button>
-            
-            <button *ngIf="usuario.activo" 
-                    class="btn btn-danger btn-sm"
-                    (click)="deshabilitarUsuario(usuario)">
+            <button *ngIf="usuario.role === 'especialista' && !usuario.aprobado" 
+                    class="positivo"
+                    (click)="aprobarEspecialista(usuario)">
+              <i class="pi pi-check-circle"></i>
+              Aprobar especialista
+            </button>
+          </div>
+          <div class="acciones-estado">
+            <button *ngIf="usuario.activo" class="negativo" (click)="deshabilitarUsuario(usuario)">
+              <i class="pi pi-user-minus"></i>
               Deshabilitar
             </button>
-            
-            <button *ngIf="!usuario.activo" 
-                    class="btn btn-success btn-sm"
-                    (click)="habilitarUsuario(usuario)">
+            <button *ngIf="!usuario.activo" class="positivo" (click)="habilitarUsuario(usuario)">
+              <i class="pi pi-user-plus"></i>
               Habilitar
             </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    
-    <div *ngIf="filtrarUsuarios().length === 0" class="empty-state">
-      <p>No hay usuarios que coincidan con los filtros seleccionados.</p>
-    </div>
+          </div>
+        </footer>
+      </article>
+    }
+  </div>
+
+  <div *ngIf="!cargando() && filtrarUsuarios().length === 0" class="empty-state">
+    <i class="pi pi-users"></i>
+    <p>No hay usuarios que coincidan con los filtros seleccionados.</p>
   </div>
 
   <div *ngIf="cargando()" class="loading">

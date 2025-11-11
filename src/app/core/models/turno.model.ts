@@ -31,6 +31,7 @@ export interface Turno {
   comentarioPaciente?: string;
   comentarioEspecialista?: string;
   resena?: Resena;
+  historiaClinica?: HistoriaClinica;
   
   fechaCreacion: Date;
   fechaModificacion?: Date;
@@ -63,6 +64,49 @@ export interface DisponibilidadEspecialista {
   horaInicio: string; // Formato: "HH:mm"
   horaFin: string; // Formato: "HH:mm"
   duracionTurno: number; // En minutos (15, 30, 45, 60)
+}
+
+export interface HistoriaClinicaDato {
+  clave: string;
+  valor: string;
+}
+
+export interface HistoriaClinica {
+  turnoId: string;
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteApellido: string;
+  especialistaId: string;
+  especialistaNombre: string;
+  especialistaApellido: string;
+  especialidad: string;
+  fechaAtencion: Date;
+  fechaAtencionTimestamp?: any;
+  altura: number;
+  peso: number;
+  temperatura: number;
+  presion: string;
+  datosDinamicos: HistoriaClinicaDato[];
+  comentarioDiagnostico?: string;
+}
+
+export interface HistoriaClinicaPayload {
+  altura: number;
+  peso: number;
+  temperatura: number;
+  presion: string;
+  datosDinamicos?: HistoriaClinicaDato[];
+  comentarioDiagnostico?: string;
+}
+
+export interface PacienteAtendidoPorEspecialista {
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteApellido: string;
+  pacienteEmail: string;
+  pacienteDNI?: string;
+  pacienteObraSocial?: string;
+  ultimosTurnos: Turno[];
 }
 
 

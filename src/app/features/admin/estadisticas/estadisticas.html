@@ -1,0 +1,188 @@
+<div class="estadisticas-admin">
+  <section class="resumen">
+    <article class="card-resumen" appHoverElevate>
+      <h3>Total de turnos</h3>
+      <p class="valor">{{ totalTurnos() }}</p>
+      <span class="detalle">Todas las especialidades</span>
+    </article>
+    <article class="card-resumen" appHoverElevate>
+      <h3>Turnos realizados</h3>
+      <p class="valor">{{ turnosRealizados() }}</p>
+      <span class="detalle">
+        {{ turnosRealizados() | porcentaje: totalTurnos() : 1 }} finalizados
+      </span>
+    </article>
+    <article class="card-resumen" appHoverElevate>
+      <h3>Turnos pendientes</h3>
+      <p class="valor">{{ turnosPendientes() }}</p>
+      <span class="detalle">En espera de confirmación o reseña</span>
+    </article>
+    <article class="card-resumen" appHoverElevate>
+      <h3>Promedio diario</h3>
+      <p class="valor">{{ promedioTurnosDia() | number:'1.1-1' }}</p>
+      <span class="detalle">Turnos por día</span>
+    </article>
+  </section>
+
+  <section class="graficos-grid">
+    <article class="grafico-card" appHoverElevate>
+      <header>
+        <div>
+          <h2>Turnos por especialidad</h2>
+          <p>Distribución total de turnos registrados en el sistema.</p>
+        </div>
+        <div class="acciones">
+          <button type="button" (click)="descargarEspecialidadExcel()">
+            <i class="pi pi-file-excel"></i>
+            Excel
+          </button>
+          <button type="button" (click)="descargarEspecialidadPdf()">
+            <i class="pi pi-file-pdf"></i>
+            PDF
+          </button>
+        </div>
+      </header>
+      <div class="grafico-wrapper">
+        <canvas
+          baseChart
+          [type]="barChartType"
+          [data]="especialidadChartData"
+          [options]="especialidadChartOptions">
+        </canvas>
+      </div>
+    </article>
+
+    <article class="grafico-card" appHoverElevate>
+      <header>
+        <div>
+          <h2>Turnos por día</h2>
+          <p>Evolución de turnos solicitados según la fecha de atención.</p>
+        </div>
+        <div class="acciones">
+          <button type="button" (click)="descargarTurnosDiaExcel()">
+            <i class="pi pi-file-excel"></i>
+            Excel
+          </button>
+          <button type="button" (click)="descargarTurnosDiaPdf()">
+            <i class="pi pi-file-pdf"></i>
+            PDF
+          </button>
+        </div>
+      </header>
+      <div class="grafico-wrapper">
+        <canvas
+          baseChart
+          [type]="lineChartType"
+          [data]="diaChartData"
+          [options]="diaChartOptions">
+        </canvas>
+      </div>
+    </article>
+  </section>
+
+  <section class="filtros-rango">
+    <h2>Rango temporal por médico</h2>
+    <div class="filtros">
+      <label>
+        Desde
+        <input
+          type="date"
+          [ngModel]="fechaFiltroDesde()"
+          (ngModelChange)="fechaFiltroDesde.set($event); onCambiarRangoFechas()"
+          appFocusBorder />
+      </label>
+      <label>
+        Hasta
+        <input
+          type="date"
+          [ngModel]="fechaFiltroHasta()"
+          (ngModelChange)="fechaFiltroHasta.set($event); onCambiarRangoFechas()"
+          appFocusBorder />
+      </label>
+    </div>
+  </section>
+
+  <section class="graficos-grid">
+    <article class="grafico-card" appHoverElevate>
+      <header>
+        <div>
+          <h2>Turnos solicitados por médico</h2>
+          <p>Turnos registrados en el rango seleccionado.</p>
+        </div>
+        <div class="acciones">
+          <button type="button" (click)="descargarTurnosMedicoExcel()">
+            <i class="pi pi-file-excel"></i>
+            Excel
+          </button>
+          <button type="button" (click)="descargarTurnosMedicoPdf()">
+            <i class="pi pi-file-pdf"></i>
+            PDF
+          </button>
+        </div>
+      </header>
+      <div class="grafico-wrapper">
+        <canvas
+          baseChart
+          [type]="barChartType"
+          [data]="medicoSolicitadosChartData"
+          [options]="medicoChartOptions">
+        </canvas>
+      </div>
+    </article>
+
+    <article class="grafico-card" appHoverElevate>
+      <header>
+        <div>
+          <h2>Turnos finalizados por médico</h2>
+          <p>Consultas completadas con reseña registrada.</p>
+        </div>
+        <div class="acciones">
+          <button type="button" (click)="descargarTurnosRealizadosExcel()">
+            <i class="pi pi-file-excel"></i>
+            Excel
+          </button>
+          <button type="button" (click)="descargarTurnosRealizadosPdf()">
+            <i class="pi pi-file-pdf"></i>
+            PDF
+          </button>
+        </div>
+      </header>
+      <div class="grafico-wrapper">
+        <canvas
+          baseChart
+          [type]="barChartType"
+          [data]="medicoRealizadosChartData"
+          [options]="medicoChartOptions">
+        </canvas>
+      </div>
+    </article>
+  </section>
+
+  <section class="logs" appHoverElevate>
+    <header>
+      <h2>Últimos ingresos al sistema</h2>
+      <p>Historial de accesos registrados automáticamente.</p>
+    </header>
+    <table>
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Fecha y hora</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of logs()">
+          <td>{{ log | nombreCompleto:'-' }}</td>
+          <td>{{ log.email }}</td>
+          <td>
+            <span [appRoleBadge]="log.role">{{ log.role }}</span>
+          </td>
+          <td>{{ log.fechaIngreso | fechaHoraCorta }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+

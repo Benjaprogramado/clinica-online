@@ -27,6 +27,7 @@ import { Observable, from, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Usuario, TipoUsuario } from '../models/user.model';
 import { NotificationService } from './notification';
+import { LogService } from './log';
 
 @Injectable({
   providedIn: 'root'
@@ -36,6 +37,7 @@ export class AuthService {
   private firestore = inject(Firestore);
   private router = inject(Router);
   private notificationService = inject(NotificationService);
+  private logService = inject(LogService);
 
   currentUser = signal<Usuario | null>(null);
 
@@ -390,6 +392,11 @@ export class AuthService {
 
       await updateDoc(userDocRef, {
         ultimoIngreso: serverTimestamp()
+      });
+
+      await this.logService.registrarIngreso({
+        ...userData,
+        uid: user.uid
       });
 
       await this.notificationService.showSuccess(

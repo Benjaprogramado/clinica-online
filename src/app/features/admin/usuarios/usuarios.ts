@@ -2,16 +2,23 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { UserService } from '../../../core/services/user';
 import { Usuario } from '../../../core/models/user.model';
 import { AuthService } from '../../../core/services/auth';
 import { NotificationService } from '../../../core/services/notification';
+import { TurnoService } from '../../../core/services/turno';
+import { ReportService } from '../../../core/services/report';
+import { LoadingService } from '../../../core/services/loading';
 import { FormUsuario } from './form-usuario/form-usuario';
+import { HoverElevateDirective } from '../../../shared/directives/hover-elevate.directive';
+import { RoleBadgeDirective } from '../../../shared/directives/role-badge.directive';
+import { NombreCompletoPipe } from '../../../shared/pipes/nombre-completo.pipe';
 
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, FormUsuario],
+  imports: [CommonModule, FormsModule, FormUsuario, HoverElevateDirective, RoleBadgeDirective, NombreCompletoPipe],
   templateUrl: './usuarios.html',
   styleUrl: './usuarios.scss'
 })
@@ -20,6 +27,9 @@ export class Usuarios implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private notificationService = inject(NotificationService);
+  private turnoService = inject(TurnoService);
+  private reportService = inject(ReportService);
+  private loadingService = inject(LoadingService);
 
   usuarios = signal<Usuario[]>([]);
   cargando = signal(false);
@@ -36,17 +46,6 @@ export class Usuarios implements OnInit {
     try {
       this.userService.getTodosLosUsuarios().subscribe({
         next: (usuarios) => {
-          console.log('Usuarios cargados:', usuarios);
-          usuarios.forEach(u => {
-            console.log('Usuario:', {
-              uid: u.uid,
-              nombre: u.nombre,
-              apellido: u.apellido,
-              email: u.email,
-              role: u.role,
-              especialidades: u.especialidades
-            });
-          });
           this.usuarios.set(usuarios);
           this.cargando.set(false);
         },
@@ -171,5 +170,63 @@ export class Usuarios implements OnInit {
   onUsuarioCreado(): void {
     this.mostrarFormulario.set(false);
     this.cargarUsuarios();
+  }
+
+  async descargarUsuariosExcel(): Promise<void> {
+    try {
+      const usuarios = this.usuarios();
+      if (!usuarios.length) {
+        await this.notificationService.showInfo(
+          'Sin datos',
+          'No hay usuarios disponibles para exportar.'
+        );
+        return;
+      }
+
+      await this.reportService.exportarUsuariosExcel(usuarios);
+      await this.notificationService.showSuccess(
+        'Descarga iniciada',
+        'El Excel con todos los usuarios se generó correctamente.'
+      );
+    } catch (error) {
+      console.error('Error exportando usuarios:', error);
+      await this.notificationService.showError(
+        'Error',
+        'No pudimos generar el Excel de usuarios. Intenta nuevamente.'
+      );
+    }
+  }
+
+  async descargarHistorialPaciente(usuario: Usuario): Promise<void> {
+    if (usuario.role !== 'paciente') {
+      return;
+    }
+
+    try {
+      this.loadingService.show();
+      const turnos = await firstValueFrom(this.turnoService.getTurnosPorPaciente(usuario.uid));
+      this.loadingService.hide();
+
+      if (!turnos.length) {
+        await this.notificationService.showInfo(
+          'Sin turnos registrados',
+          'El paciente seleccionado todavía no tiene turnos para exportar.'
+        );
+        return;
+      }
+
+      await this.reportService.exportarTurnosPacienteExcel(turnos);
+      await this.notificationService.showSuccess(
+        'Descarga iniciada',
+        `Se generó el Excel con los turnos de ${usuario.nombre} ${usuario.apellido}.`
+      );
+    } catch (error) {
+      console.error('Error exportando turnos del paciente:', error);
+      this.loadingService.hide();
+      await this.notificationService.showError(
+        'Error',
+        'Ocurrió un problema al generar el Excel del paciente. Intenta nuevamente.'
+      );
+    }
   }
 }

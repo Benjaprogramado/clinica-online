@@ -1,18 +1,96 @@
-<div class="mi-perfil-container">
-  <div class="container py-5">
-    <div class="card custom-card">
-      <div class="card-header">
-        <h2 class="mb-0">
-          <i class="pi pi-user me-2"></i>
-          Mi Perfil
-        </h2>
+<div class="mi-perfil-paciente">
+  <section class="perfil-resumen" *ngIf="usuario() as usuarioActual">
+    <div class="perfil-encabezado">
+      <div class="avatar">
+        <i class="pi pi-user"></i>
       </div>
-      <div class="card-body">
-        <div class="alert alert-info">
-          <i class="pi pi-info-circle me-2"></i>
-          Esta sección se implementará en sprints futuros.
-        </div>
+      <div>
+        <h1>{{ usuarioActual.nombre }} {{ usuarioActual.apellido }}</h1>
+        <p>{{ usuarioActual.email }}</p>
       </div>
     </div>
-  </div>
+    <div class="perfil-detalles">
+      <div>
+        <span class="label">DNI</span>
+        <span class="valor">{{ usuarioActual.dni }}</span>
+      </div>
+      <div>
+        <span class="label">Edad</span>
+        <span class="valor">{{ usuarioActual.edad }}</span>
+      </div>
+      <div>
+        <span class="label">Obra social</span>
+        <span class="valor">{{ usuarioActual.obraSocial || 'No especificada' }}</span>
+      </div>
+      <div>
+        <span class="label">Último ingreso</span>
+        <span class="valor">
+          {{ usuarioActual.ultimoIngreso ? (usuarioActual.ultimoIngreso | date:'dd/MM/yyyy HH:mm') : 'Sin datos' }}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="historia-clinica">
+    <div class="historia-header">
+      <div>
+        <h2>Historia clínica digital</h2>
+        <p>Consulta y descarga tus atenciones registradas por los especialistas.</p>
+      </div>
+      <div class="acciones">
+        <select [ngModel]="especialidadSeleccionada()" (ngModelChange)="cambiarEspecialidad($event)">
+          <option value="todas">Todas las especialidades</option>
+          <option *ngFor="let especialidad of especialidadesDisponibles()" [value]="especialidad">
+            {{ especialidad }}
+          </option>
+        </select>
+        <button type="button" (click)="descargarPdf()">
+          <i class="pi pi-download"></i>
+          Descargar PDF
+        </button>
+      </div>
+    </div>
+
+    @if (historiasFiltradas().length === 0) {
+      <div class="historia-vacia">
+        <i class="pi pi-info-circle"></i>
+        <p>No hay atenciones registradas para la especialidad seleccionada.</p>
+      </div>
+    } @else {
+      <div class="historia-grid">
+        @for (historia of historiasFiltradas(); track historia.turnoId) {
+          <div class="historia-card">
+            <div class="historia-card-header">
+              <span class="fecha">
+                {{ formatearFecha(historia.fechaAtencion) }} • {{ formatearHora(historia.fechaAtencion) }}
+              </span>
+              <span class="especialidad">{{ historia.especialidad }}</span>
+            </div>
+            <div class="historia-card-body">
+              <div class="fila">
+                <span class="label">Profesional</span>
+                <span class="valor">{{ historia.especialistaNombre }} {{ historia.especialistaApellido }}</span>
+              </div>
+              <div class="valores">
+                <span><strong>Altura:</strong> {{ historia.altura }} cm</span>
+                <span><strong>Peso:</strong> {{ historia.peso }} kg</span>
+                <span><strong>Temperatura:</strong> {{ historia.temperatura }} °C</span>
+                <span><strong>Presión:</strong> {{ historia.presion }}</span>
+              </div>
+              <p class="diagnostico">
+                <strong>Diagnóstico / Comentarios:</strong>
+                {{ historia.comentarioDiagnostico || 'Sin comentarios adicionales.' }}
+              </p>
+            </div>
+            <div class="historia-card-footer">
+              <button type="button" (click)="verDetalle(historia)">
+                <i class="pi pi-search"></i>
+                Ver detalle
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
 </div>

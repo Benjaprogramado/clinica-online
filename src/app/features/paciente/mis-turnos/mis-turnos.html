@@ -103,6 +103,23 @@
                 <span class="comentario-resena">{{ turno.resena.comentario }}</span>
               </div>
             }
+            @if (turno.historiaClinica) {
+              <div class="historia-resumen">
+                <div class="historia-resumen-header">
+                  <strong>Historia clínica disponible</strong>
+                  <button type="button" class="btn-link" (click)="verHistoriaClinica(turno)">
+                    <i class="pi pi-search"></i>
+                    Ver detalle
+                  </button>
+                </div>
+                <div class="historia-resumen-grid">
+                  <span><strong>Altura:</strong> {{ turno.historiaClinica.altura }} cm</span>
+                  <span><strong>Peso:</strong> {{ turno.historiaClinica.peso }} kg</span>
+                  <span><strong>Temperatura:</strong> {{ turno.historiaClinica.temperatura }} °C</span>
+                  <span><strong>Presión:</strong> {{ turno.historiaClinica.presion }}</span>
+                </div>
+              </div>
+            }
           </div>
 
           <div class="tarjeta-footer">
