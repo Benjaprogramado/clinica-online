@@ -438,13 +438,13 @@ export class AuthService {
     switch (role) {
       case 'paciente':
         // TODO: Implementar módulo de paciente
-        // this.router.navigate(['/paciente/mis-turnos']);
-        this.router.navigate(['/']);
+        this.router.navigate(['/paciente/mis-turnos']);
+        // this.router.navigate(['/']);
         break;
       case 'especialista':
         // TODO: Implementar módulo de especialista
-        // this.router.navigate(['/especialista/mis-turnos']);
-        this.router.navigate(['/']);
+        this.router.navigate(['/especialista/mis-turnos']);
+        // this.router.navigate(['/']);
         break;
       case 'administrador':
         this.router.navigate(['/admin/usuarios']);
