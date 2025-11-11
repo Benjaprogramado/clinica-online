@@ -59,6 +59,42 @@ export class NotificationService {
     });
   }
 
+  async promptTextarea(
+    title: string,
+    text: string,
+    placeholder: string = '',
+    confirmButtonText: string = 'Aceptar',
+    cancelButtonText: string = 'Cancelar',
+    minLength: number = 5
+  ): Promise<string | null> {
+    const result = await Swal.fire({
+      ...this.defaultConfig,
+      icon: 'question',
+      title,
+      text,
+      input: 'textarea',
+      inputPlaceholder: placeholder,
+      inputAttributes: {
+        'aria-label': placeholder
+      },
+      showCancelButton: true,
+      confirmButtonText,
+      cancelButtonText,
+      inputValidator: value => {
+        if (!value || value.trim().length < minLength) {
+          return `Ingresa al menos ${minLength} caracteres.`;
+        }
+        return null;
+      }
+    });
+
+    if (result.isConfirmed && typeof result.value === 'string') {
+      return result.value.trim();
+    }
+
+    return null;
+  }
+
   async confirm(
     title: string,
     text: string,

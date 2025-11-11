@@ -1,10 +1,13 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 import { TurnoService } from '../../../core/services/turno';
 import { Turno, EstadoTurno, FiltroTurnos } from '../../../core/models/turno.model';
 import { LoadingService } from '../../../core/services/loading';
+import { NotificationService } from '../../../core/services/notification';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-turnos-admin',
@@ -13,12 +16,15 @@ import { LoadingService } from '../../../core/services/loading';
   templateUrl: './turnos.html',
   styleUrl: './turnos.scss'
 })
-export class TurnosAdminComponent implements OnInit {
+export class TurnosAdminComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private turnoService = inject(TurnoService);
   private loadingService = inject(LoadingService);
+  private notificationService = inject(NotificationService);
+  private router = inject(Router);
 
   turnos = signal<Turno[]>([]);
+  private turnosSub?: Subscription;
   turnosFiltrados = computed(() => {
     let resultado = [...this.turnos()];
 
@@ -74,9 +80,13 @@ export class TurnosAdminComponent implements OnInit {
     this.cargarTurnos();
   }
 
+  ngOnDestroy() {
+    this.turnosSub?.unsubscribe();
+  }
   cargarTurnos() {
     this.loadingService.show();
-    this.turnoService.getAllTurnos().subscribe({
+    this.turnosSub?.unsubscribe();
+    this.turnosSub = this.turnoService.getAllTurnos().subscribe({
       next: (turnos) => {
         this.turnos.set(turnos);
         this.loadingService.hide();
@@ -84,6 +94,7 @@ export class TurnosAdminComponent implements OnInit {
       error: () => this.loadingService.hide()
     });
   }
+
 
   aplicarFiltroEstado(estado: EstadoTurno | 'todos') {
     this.filtros.update(f => ({ ...f, estado }));
@@ -144,5 +155,39 @@ export class TurnosAdminComponent implements OnInit {
     const month = String(fecha.getMonth() + 1).padStart(2, '0');
     const day = String(fecha.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  irASolicitarTurno() {
+    this.router.navigate(['/admin/solicitar-turno']);
+  }
+
+  async cancelarTurno(turno: Turno) {
+    if (turno.estado !== 'pendiente') {
+      return;
+    }
+
+    const comentario = await this.notificationService.promptTextarea(
+      'Cancelar turno',
+      `Ingresa el motivo de cancelación del turno de ${turno.pacienteNombre} ${turno.pacienteApellido} con ${turno.especialistaNombre} ${turno.especialistaApellido}.`,
+      'Motivo de cancelación',
+      'Cancelar turno'
+    );
+
+    if (!comentario) {
+      return;
+    }
+
+    this.loadingService.show();
+    try {
+      await this.turnoService.cancelarTurno(turno.id, comentario);
+      this.loadingService.hide();
+      await this.notificationService.showSuccess(
+        'Turno cancelado',
+        'El turno pendiente fue cancelado correctamente.'
+      );
+    } catch (error) {
+      this.loadingService.hide();
+      // El servicio ya muestra la notificación de error
+    }
   }
 }

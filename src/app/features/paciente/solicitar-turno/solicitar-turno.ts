@@ -1,11 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 import { TurnoService } from '../../../core/services/turno';
 import { DisponibilidadService } from '../../../core/services/disponibilidad';
-import { EspecialidadesService } from '../../../core/services/especialidades';
 import { UserService } from '../../../core/services/user';
 import { Usuario } from '../../../core/models/user.model';
 import { DisponibilidadEspecialista } from '../../../core/models/turno.model';
@@ -30,10 +29,10 @@ interface TurnoDisponible {
 export class SolicitarTurnoComponent implements OnInit {
   private fb = inject(FormBuilder);
   router = inject(Router);
+  private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private turnoService = inject(TurnoService);
   private disponibilidadService = inject(DisponibilidadService);
-  private especialidadesService = inject(EspecialidadesService);
   private userService = inject(UserService);
   private loadingService = inject(LoadingService);
   private notificationService = inject(NotificationService);
@@ -43,16 +42,30 @@ export class SolicitarTurnoComponent implements OnInit {
   especialidadesDelEspecialista = signal<string[]>([]);
   disponibilidades = signal<DisponibilidadEspecialista[]>([]);
   turnosDisponibles = signal<TurnoDisponible[]>([]);
+  pacientes = signal<Usuario[]>([]);
   
+  modoAdmin = signal<boolean>(false);
   especialistaSeleccionado = signal<Usuario | null>(null);
   captchaValidado = signal<boolean>(false);
 
   constructor() {
-    this.formulario = this.fb.group({
+    const modoTurno = this.route.snapshot.data['modoTurno'];
+    this.modoAdmin.set(modoTurno === 'admin');
+
+    const controles: Record<string, any> = {
       especialista: ['', Validators.required],
       especialidad: ['', Validators.required],
       fechaHora: ['', Validators.required],
       comentario: ['']
+    };
+
+    if (this.modoAdmin()) {
+      controles['paciente'] = ['', Validators.required];
+      this.captchaValidado.set(true);
+    }
+
+    this.formulario = this.fb.group({
+      ...controles
     });
   }
 
@@ -60,6 +73,18 @@ export class SolicitarTurnoComponent implements OnInit {
     this.loadingService.show();
     
     try {
+      if (this.modoAdmin()) {
+        this.loadingService.show();
+        this.userService.getUsuariosPorRol('paciente').subscribe({
+          next: (pacientes) => {
+            const pacientesActivos = pacientes.filter(p => p.activo !== false);
+            this.pacientes.set(pacientesActivos);
+            this.loadingService.hide();
+          },
+          error: () => this.loadingService.hide()
+        });
+      }
+
       // Cargar todos los especialistas aprobados
       this.userService.getUsuariosPorRol('especialista').subscribe({
         next: (usuarios) => {
@@ -271,6 +296,9 @@ export class SolicitarTurnoComponent implements OnInit {
 
 
   onCaptchaValidado(validado: boolean) {
+    if (this.modoAdmin()) {
+      return;
+    }
     this.captchaValidado.set(validado);
   }
 
@@ -284,11 +312,6 @@ export class SolicitarTurnoComponent implements OnInit {
         'reCAPTCHA no validado',
         'Debes completar correctamente la verificación de seguridad (reCAPTCHA) antes de solicitar el turno.'
       );
-      return;
-    }
-
-    const currentUser = this.authService.currentUser();
-    if (!currentUser) {
       return;
     }
 
@@ -311,17 +334,38 @@ export class SolicitarTurnoComponent implements OnInit {
       return;
     }
 
+    let pacienteSeleccionado: Usuario | null = null;
+
+    if (this.modoAdmin()) {
+      const pacienteId = valores.paciente;
+      pacienteSeleccionado = this.pacientes().find(p => p.uid === pacienteId) || null;
+
+      if (!pacienteSeleccionado) {
+        await this.notificationService.showWarning(
+          'Paciente no válido',
+          'Debes seleccionar un paciente registrado para asignar el turno.'
+        );
+        return;
+      }
+    } else {
+      const currentUser = this.authService.currentUser();
+      if (!currentUser) {
+        return;
+      }
+      pacienteSeleccionado = currentUser;
+    }
+
     const fechaCompleta = turnoSeleccionado.fecha;
 
     this.loadingService.show();
     try {
       await this.turnoService.crearTurno({
-        pacienteId: currentUser.uid,
-        pacienteNombre: currentUser.nombre,
-        pacienteApellido: currentUser.apellido,
-        pacienteDNI: currentUser.dni,
-        pacienteEmail: currentUser.email,
-        pacienteObraSocial: currentUser.obraSocial,
+        pacienteId: pacienteSeleccionado.uid,
+        pacienteNombre: pacienteSeleccionado.nombre,
+        pacienteApellido: pacienteSeleccionado.apellido,
+        pacienteDNI: pacienteSeleccionado.dni,
+        pacienteEmail: pacienteSeleccionado.email,
+        pacienteObraSocial: pacienteSeleccionado.obraSocial,
         especialistaId: especialista.uid,
         especialistaNombre: especialista.nombre,
         especialistaApellido: especialista.apellido,
@@ -339,14 +383,20 @@ export class SolicitarTurnoComponent implements OnInit {
       // Mostrar notificación de éxito
       await this.notificationService.showSuccess(
         'Turno solicitado',
-        'Tu turno ha sido solicitado correctamente. El especialista lo revisará pronto.'
+        this.modoAdmin()
+          ? 'El turno ha sido solicitado para el paciente seleccionado.'
+          : 'Tu turno ha sido solicitado correctamente. El especialista lo revisará pronto.'
       );
 
       // Navegar después de cerrar la notificación
-      this.router.navigate(['/paciente/mis-turnos']);
+      this.router.navigate(this.modoAdmin() ? ['/admin/turnos'] : ['/paciente/mis-turnos']);
     } catch (error) {
       // Error manejado por el servicio
       this.loadingService.hide();
     }
+  }
+
+  onCancelar() {
+    this.router.navigate(this.modoAdmin() ? ['/admin/turnos'] : ['/paciente/mis-turnos']);
   }
 }

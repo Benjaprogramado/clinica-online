@@ -63,6 +63,14 @@ export const routes: Routes = [
       import('./features/admin/turnos/turnos').then(m => m.TurnosAdminComponent),
     title: 'Gestión de Turnos'
   },
+  {
+    path: 'admin/solicitar-turno',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['administrador'], modoTurno: 'admin' },
+    loadComponent: () =>
+      import('./features/paciente/solicitar-turno/solicitar-turno').then(m => m.SolicitarTurnoComponent),
+    title: 'Solicitar Turno'
+  },
   // Rutas Paciente
   {
     path: 'paciente/solicitar-turno',

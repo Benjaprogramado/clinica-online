@@ -9,23 +9,37 @@
     </div>
     
     <div class="filtros">
-      <div class="filtro-group">
-        <label>Filtrar por rol:</label>
-        <select [(ngModel)]="filtroRol" (change)="filtroRol.set(filtroRol())">
-          <option value="todos">Todos</option>
-          <option value="paciente">Pacientes</option>
-          <option value="especialista">Especialistas</option>
-          <option value="administrador">Administradores</option>
-        </select>
+      <div class="filtro-group filtro-rol">
+        <label>Rol</label>
+        <div class="botones">
+          <button type="button" [class.activo]="filtroRol() === 'todos'" (click)="filtroRol.set('todos')">
+            Todos
+          </button>
+          <button type="button" [class.activo]="filtroRol() === 'paciente'" (click)="filtroRol.set('paciente')">
+            Pacientes
+          </button>
+          <button type="button" [class.activo]="filtroRol() === 'especialista'" (click)="filtroRol.set('especialista')">
+            Especialistas
+          </button>
+          <button type="button" [class.activo]="filtroRol() === 'administrador'" (click)="filtroRol.set('administrador')">
+            Administradores
+          </button>
+        </div>
       </div>
       
-      <div class="filtro-group">
-        <label>Estado de aprobación:</label>
-        <select [(ngModel)]="filtroAprobacion" (change)="filtroAprobacion.set(filtroAprobacion())">
-          <option value="todos">Todos</option>
-          <option value="pendientes">Pendientes</option>
-          <option value="aprobados">Aprobados</option>
-        </select>
+      <div class="filtro-group filtro-aprobacion">
+        <label>Estado de aprobación</label>
+        <div class="botones">
+          <button type="button" [class.activo]="filtroAprobacion() === 'todos'" (click)="filtroAprobacion.set('todos')">
+            Todos
+          </button>
+          <button type="button" [class.activo]="filtroAprobacion() === 'pendientes'" (click)="filtroAprobacion.set('pendientes')">
+            Pendientes
+          </button>
+          <button type="button" [class.activo]="filtroAprobacion() === 'aprobados'" (click)="filtroAprobacion.set('aprobados')">
+            Aprobados
+          </button>
+        </div>
       </div>
     </div>
   </div>

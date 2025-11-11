@@ -13,7 +13,8 @@ import {
   Timestamp,
   CollectionReference,
   QueryConstraint,
-  serverTimestamp
+  serverTimestamp,
+  collectionData
 } from '@angular/fire/firestore';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -150,12 +151,12 @@ export class TurnoService {
       orderBy('fechaTimestamp', 'desc')
     );
 
-    return from(getDocs(q)).pipe(
-      map(querySnapshot => {
-        return querySnapshot.docs.map(doc => 
-          this.convertirTurnoDesdeFirestore(doc.id, doc.data())
-        );
-      })
+    return collectionData(q, { idField: 'id' }).pipe(
+      map(docs =>
+        docs.map((docData: any) =>
+          this.convertirTurnoDesdeFirestore(docData.id, docData)
+        )
+      )
     );
   }
 

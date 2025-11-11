@@ -12,6 +12,34 @@
 
           <div class="card-body">
             <form [formGroup]="formulario" (ngSubmit)="onSubmit()">
+              @if (modoAdmin()) {
+                <div class="mb-4">
+                  <label class="form-label fw-bold">
+                    Paciente <span class="text-danger">*</span>
+                  </label>
+                  <select
+                    class="form-select"
+                    formControlName="paciente">
+                    <option value="">Selecciona un paciente registrado</option>
+                    @for (pac of pacientes(); track pac.uid) {
+                      <option [value]="pac.uid">
+                        {{ pac.nombre }} {{ pac.apellido }} - DNI: {{ pac.dni }}
+                      </option>
+                    }
+                  </select>
+                  @if (pacientes().length === 0) {
+                    <div class="alert alert-warning mt-2">
+                      No hay pacientes registrados para asignar turnos.
+                    </div>
+                  }
+                  @if (formulario.get('paciente')?.invalid && formulario.get('paciente')?.touched) {
+                    <div class="text-danger small mt-1">
+                      Selecciona un paciente
+                    </div>
+                  }
+                </div>
+              }
+
               <!-- Paso 1: Profesionales (botones cuadrados con imagen) -->
               <div class="mb-4">
                 <label class="form-label fw-bold">
@@ -127,19 +155,21 @@
               </div>
 
               <!-- reCAPTCHA -->
-              <div class="mb-4">
-                <label class="form-label fw-bold">
-                  Verificación de seguridad <span class="text-danger">*</span>
-                </label>
-                <app-recaptcha (captchaValidado)="onCaptchaValidado($event)"></app-recaptcha>
-              </div>
+              @if (!modoAdmin()) {
+                <div class="mb-4">
+                  <label class="form-label fw-bold">
+                    Verificación de seguridad <span class="text-danger">*</span>
+                  </label>
+                  <app-recaptcha (captchaValidado)="onCaptchaValidado($event)"></app-recaptcha>
+                </div>
+              }
 
               <!-- Botones -->
               <div class="d-flex gap-2 justify-content-end">
                 <button
                   type="button"
                   class="btn btn-secondary"
-                  (click)="router.navigate(['/paciente/mis-turnos'])">
+                  (click)="onCancelar()">
                   Cancelar
                 </button>
                 <button
