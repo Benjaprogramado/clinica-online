@@ -107,37 +107,39 @@ export class MisTurnosPacienteComponent implements OnInit {
   }
 
   async cancelarTurno(turno: Turno) {
-    const resultado = await Swal.fire({
-      title: '¿Cancelar turno?',
-      text: `¿Estás seguro de cancelar el turno del ${new Date(turno.fecha).toLocaleDateString()} a las ${turno.hora}?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#00adb5',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, cancelar',
-      cancelButtonText: 'No'
-    });
+    if (turno.estado !== 'pendiente') {
+      return;
+    }
 
-    if (resultado.isConfirmed) {
-      this.loadingService.show();
-      try {
-        await this.turnoService.cancelarTurno(turno.id, 'Cancelado por el paciente');
-        
-        // Ocultar loading antes de recargar turnos
-        this.loadingService.hide();
-        
-        // Recargar turnos
-        await this.cargarTurnosAsync();
-        
-        // Mostrar notificación de éxito después de recargar
-        await this.notificationService.showSuccess(
-          'Turno cancelado',
-          'El turno ha sido cancelado correctamente.'
-        );
-      } catch (error) {
-        // Error manejado por el servicio
-        this.loadingService.hide();
-      }
+    const comentario = await this.notificationService.promptTextarea(
+      'Cancelar turno',
+      `Ingresa el motivo de cancelación del turno con ${turno.especialistaNombre} ${turno.especialistaApellido} el ${new Date(turno.fecha).toLocaleDateString()} a las ${turno.hora}.`,
+      'Motivo de cancelación',
+      'Cancelar turno'
+    );
+
+    if (!comentario) {
+      return;
+    }
+
+    this.loadingService.show();
+    try {
+      await this.turnoService.cancelarTurno(turno.id, comentario);
+      
+      // Ocultar loading antes de recargar turnos
+      this.loadingService.hide();
+      
+      // Recargar turnos
+      await this.cargarTurnosAsync();
+      
+      // Mostrar notificación de éxito después de recargar
+      await this.notificationService.showSuccess(
+        'Turno cancelado',
+        'El turno ha sido cancelado correctamente.'
+      );
+    } catch (error) {
+      // Error manejado por el servicio
+      this.loadingService.hide();
     }
   }
 

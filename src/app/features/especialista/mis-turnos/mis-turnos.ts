@@ -220,36 +220,38 @@ export class MisTurnosEspecialistaComponent implements OnInit {
   }
 
   async cancelarTurno(turno: Turno) {
-    const resultado = await Swal.fire({
-      title: '¿Cancelar turno?',
-      text: `¿Estás seguro de cancelar el turno del ${new Date(turno.fecha).toLocaleDateString()} a las ${turno.hora}?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#00adb5',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, cancelar',
-      cancelButtonText: 'No'
-    });
+    if (turno.estado !== 'pendiente') {
+      return;
+    }
 
-    if (resultado.isConfirmed) {
-      this.loadingService.show();
-      let exito = false;
-      try {
-        await this.turnoService.cancelarTurno(turno.id, 'Cancelado por el especialista');
-        await this.cargarTurnosAsync();
-        exito = true;
-      } catch (error) {
-        // Error manejado por el servicio
-      } finally {
-        this.loadingService.hide();
-      }
+    const comentario = await this.notificationService.promptTextarea(
+      'Cancelar turno',
+      `Ingresa el motivo de cancelación del turno con ${turno.pacienteNombre} ${turno.pacienteApellido} el ${new Date(turno.fecha).toLocaleDateString()} a las ${turno.hora}.`,
+      'Motivo de cancelación',
+      'Cancelar turno'
+    );
 
-      if (exito) {
-        await this.notificationService.showSuccess(
-          'Turno cancelado',
-          'El turno ha sido cancelado correctamente.'
-        );
-      }
+    if (!comentario) {
+      return;
+    }
+
+    this.loadingService.show();
+    let exito = false;
+    try {
+      await this.turnoService.cancelarTurno(turno.id, comentario);
+      await this.cargarTurnosAsync();
+      exito = true;
+    } catch (error) {
+      // Error manejado por el servicio
+    } finally {
+      this.loadingService.hide();
+    }
+
+    if (exito) {
+      await this.notificationService.showSuccess(
+        'Turno cancelado',
+        'El turno ha sido cancelado correctamente.'
+      );
     }
   }
 

@@ -8,7 +8,7 @@ export class FocusBorderDirective {
   @Input('appFocusBorder') color: string = '#00adb5';
 
   @HostBinding('style.transition') transition = 'box-shadow 0.2s ease, border-color 0.2s ease';
-  @HostBinding('style.borderColor') borderColor = 'rgba(255,255,255,0.2)';
+  @HostBinding('style.borderColor') borderColor = 'rgba(22, 250, 212, 0.78)';
   @HostBinding('style.outline') outline = 'none';
   @HostBinding('style.boxShadow') boxShadow = 'none';
 
@@ -20,7 +20,7 @@ export class FocusBorderDirective {
 
   @HostListener('blur')
   onBlur(): void {
-    this.borderColor = 'rgba(255,255,255,0.2)';
+    this.borderColor = 'rgba(231, 255, 15, 0.68)';
     this.boxShadow = 'none';
   }
 

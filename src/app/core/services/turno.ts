@@ -280,11 +280,21 @@ export class TurnoService {
    * Cancela un turno (Paciente o Especialista)
    */
   async cancelarTurno(turnoId: string, comentario?: string): Promise<void> {
+    const comentarioSanitizado = comentario?.trim() ?? '';
+
+    if (!comentarioSanitizado || comentarioSanitizado.length < 5) {
+      await this.notificationService.showError(
+        'Comentario requerido',
+        'Debes proporcionar un motivo de cancelación (mínimo 5 caracteres).'
+      );
+      throw new Error('Comentario de cancelación requerido');
+    }
+
     try {
       const turnoDocRef = doc(this.firestore, `turnos/${turnoId}`);
       await updateDoc(turnoDocRef, {
         estado: 'cancelado',
-        comentarioEspecialista: comentario || '',
+        comentarioEspecialista: comentarioSanitizado,
         fechaModificacionTimestamp: serverTimestamp()
       });
 
