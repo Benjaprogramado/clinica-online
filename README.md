@@ -5,13 +5,13 @@ Aplicación web desarrollada en Angular 20 para gestionar la atención de una cl
 ## Acceso y Autenticación
 
 - **Landing page:** página inicial con presentación general y accesos directos a registro e inicio de sesión.
+(public/capturaLanding.png)
 - **Registro de usuarios:** flujo diferenciado para pacientes y especialistas, con validaciones, carga de documentación y selección de especialidades.
 - **Login:** autenticación con email y contraseña. Existen accesos rápidos configurados para pruebas (perfiles paciente, especialista y administrador).
-- **Recuperación de contraseña:** proceso guiado para restablecer credenciales a través de correo electrónico.
 
 ## Navegación General
 
-La aplicación utiliza enrutamiento con lazy loading, guards y layout independiente por rol. Tras iniciar sesión, cada usuario accede a un dashboard personalizado:
+Tras iniciar sesión, cada usuario accede a un dashboard personalizado:
 
 - Barra lateral con enlaces a las secciones disponibles según el rol.
 - Encabezado con acceso al perfil, cambios de estado y cierre de sesión.
@@ -36,12 +36,6 @@ La aplicación utiliza enrutamiento con lazy loading, guards y layout independie
 - **Logs y auditoría:** tablero con los registros de actividad relevantes para el control interno.
 - **Estadísticas:** panel de métricas y gráficos sobre turnos, especialidades más demandadas y participación de usuarios.
 
-## Arquitectura y Tecnologías
-
-- **Frontend:** Angular standalone components, señales y RxJS para la gestión reactiva de datos y estados.
-- **Estilos:** SCSS modular con Bootstrap 5, PrimeNG y tema oscuro (#1a1a2e, #00adb5, #00d4ff).
-- **Backend-as-a-Service:** Firebase Authentication, Cloud Firestore y Storage para persistencia y archivos.
-- **Utilidades:** formularios reactivos, guards de roles, interceptores HTTP, pipes y directivas personalizadas.
 
 ## Ejecución Local
 
@@ -51,3 +45,4 @@ npm run start
 ```
 
 La aplicación queda disponible en `http://localhost:4200/`. Para builds de producción utilizar `npm run build`.
+Tambienn se puede consultar su versión online hosteada en Firebase https://clinica-online-56d43.web.app/
