@@ -7,8 +7,9 @@ Aplicación web desarrollada en Angular 20 para gestionar la atención de una cl
 - **Landing page:** página inicial con presentación general y accesos directos a registro e inicio de sesión.
 ![Pantalla de landing](public/capturaLanding.png)
 - **Registro de usuarios:** flujo diferenciado para pacientes y especialistas, con validaciones, carga de documentación y selección de especialidades.
+![Pantalla de registro](public/capturaRegistro.png)
 - **Login:** autenticación con email y contraseña. Existen accesos rápidos configurados para pruebas (perfiles paciente, especialista y administrador).
-
+![Pantalla de login](public/capturaLoginAR.png)
 ## Navegación General
 
 Tras iniciar sesión, cada usuario accede a un dashboard personalizado:
@@ -20,17 +21,20 @@ Tras iniciar sesión, cada usuario accede a un dashboard personalizado:
 ## Módulos y Secciones
 
 ### Pacientes
+![Pantalla de paciente](public/capturaPaciente.png)
 - **Solicitar turnos:** selección guiada de profesional, especialidad, fecha y horario disponibles.
 - **Mis turnos:** listado filtrable con estados (pendiente, aceptado, realizado, cancelado) y opciones para calificar, subir reseñas o cancelar.
 - **Historia clínica:** visualización de atenciones pasadas con detalles cargados por los especialistas.
 - **Mi perfil:** actualización de datos personales y descarga en PDF de la historia clínica por especialidad.
 
 ### Especialistas
+![Pantalla de especialista](public/capturaEspecialista.png)
 - **Agenda de turnos:** gestión de turnos asignados con acciones de aceptar, rechazar, completar y cargar la historia clínica.
 - **Pacientes atendidos:** listado de pacientes con los que tuvo al menos una consulta, incluyendo los últimos turnos y acceso rápido a sus historias clínicas.
 - **Perfil profesional:** configuración de disponibilidad y especialidades, actualización de datos y documentación.
 
 ### Administradores
+![Pantalla de admin](public/capturaAdmin.png)
 - **Gestión de usuarios:** alta y modificación de usuarios, habilitación de especialistas y exportación de información a Excel.
 - **Solicitar turnos:** posibilidad de crear turnos en nombre de un paciente, seleccionando profesional, especialidad y horarios disponibles.
 - **Logs y auditoría:** tablero con los registros de actividad relevantes para el control interno.
