@@ -12,11 +12,18 @@ import { DisponibilidadEspecialista } from '../../../core/models/turno.model';
 import { LoadingService } from '../../../core/services/loading';
 import { NotificationService } from '../../../core/services/notification';
 import { RecaptchaComponent } from '../../../shared/components/recaptcha/recaptcha';
+import { EspecialidadImagenPipe } from '../../../shared/pipes/especialidad-imagen.pipe';
+
+interface TurnoDisponible {
+  fecha: Date;
+  hora: string;
+  fechaHoraStr: string; // Formato: "2021-09-09 1:15 PM"
+}
 
 @Component({
   selector: 'app-solicitar-turno',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DatePipe, RecaptchaComponent],
+  imports: [CommonModule, ReactiveFormsModule, DatePipe, RecaptchaComponent, EspecialidadImagenPipe],
   templateUrl: './solicitar-turno.html',
   styleUrl: './solicitar-turno.scss'
 })
@@ -32,22 +39,19 @@ export class SolicitarTurnoComponent implements OnInit {
   private notificationService = inject(NotificationService);
 
   formulario: FormGroup;
-  especialidades = signal<string[]>([]);
   especialistas = signal<Usuario[]>([]);
+  especialidadesDelEspecialista = signal<string[]>([]);
   disponibilidades = signal<DisponibilidadEspecialista[]>([]);
-  fechasDisponibles = signal<Date[]>([]);
-  horariosDisponibles = signal<string[]>([]);
+  turnosDisponibles = signal<TurnoDisponible[]>([]);
   
   especialistaSeleccionado = signal<Usuario | null>(null);
-  fechaSeleccionada = signal<Date | null>(null);
   captchaValidado = signal<boolean>(false);
 
   constructor() {
     this.formulario = this.fb.group({
-      especialidad: ['', Validators.required],
       especialista: ['', Validators.required],
-      fecha: ['', Validators.required],
-      hora: ['', Validators.required],
+      especialidad: ['', Validators.required],
+      fechaHora: ['', Validators.required],
       comentario: ['']
     });
   }
@@ -56,10 +60,11 @@ export class SolicitarTurnoComponent implements OnInit {
     this.loadingService.show();
     
     try {
-      // Cargar especialidades
-      this.especialidadesService.obtenerEspecialidades().subscribe({
-        next: (esp) => {
-          this.especialidades.set(esp);
+      // Cargar todos los especialistas aprobados
+      this.userService.getUsuariosPorRol('especialista').subscribe({
+        next: (usuarios) => {
+          const especialistasAprobados = usuarios.filter(u => u.aprobado === true);
+          this.especialistas.set(especialistasAprobados);
           this.loadingService.hide();
         },
         error: () => this.loadingService.hide()
@@ -69,193 +74,192 @@ export class SolicitarTurnoComponent implements OnInit {
     }
   }
 
-  onEspecialidadSeleccionada() {
-    const especialidad = this.formulario.get('especialidad')?.value;
-    if (!especialidad) {
-      this.especialistas.set([]);
-      this.formulario.patchValue({ especialista: '', fecha: '', hora: '' });
-      return;
-    }
-
-    // Cargar especialistas de esa especialidad
-    this.loadingService.show();
-    this.userService.getUsuariosPorRol('especialista').subscribe({
-      next: (usuarios) => {
-        // Filtro mejorado: case-insensitive y normalización
-        const especialidadNormalizada = especialidad.trim().toLowerCase();
-        const especialistasFiltrados = usuarios.filter(u => {
-          // Verificar que el usuario tenga especialidades
-          if (!u.especialidades || !Array.isArray(u.especialidades)) {
-            return false;
-          }
-          
-          // Verificar que esté aprobado (debe ser explícitamente true)
-          if (u.aprobado !== true) {
-            return false;
-          }
-          
-          // Buscar coincidencia case-insensitive
-          return u.especialidades.some(esp => 
-            esp && esp.trim().toLowerCase() === especialidadNormalizada
-          );
-        });
-        
-        this.especialistas.set(especialistasFiltrados);
-        this.formulario.patchValue({ especialista: '', fecha: '', hora: '' });
-        this.especialistaSeleccionado.set(null);
-        this.disponibilidades.set([]);
-        this.fechasDisponibles.set([]);
-        this.horariosDisponibles.set([]);
-        this.loadingService.hide();
-      },
-      error: (err) => {
-        console.error('Error al cargar especialistas:', err);
-        this.loadingService.hide();
-      }
-    });
-  }
-
   onEspecialistaSeleccionado() {
     const especialistaId = this.formulario.get('especialista')?.value;
     if (!especialistaId) {
       this.especialistaSeleccionado.set(null);
-      this.disponibilidades.set([]);
-      this.formulario.patchValue({ fecha: '', hora: '' });
+      this.especialidadesDelEspecialista.set([]);
+      this.formulario.patchValue({ especialidad: '', fechaHora: '' });
       return;
     }
 
-    const especialidad = this.formulario.get('especialidad')?.value;
     const especialista = this.especialistas().find(e => e.uid === especialistaId);
     this.especialistaSeleccionado.set(especialista || null);
 
-    // Cargar disponibilidades (puede haber múltiples con diferentes horarios)
+    // Obtener especialidades del especialista seleccionado
+    if (especialista && especialista.especialidades && Array.isArray(especialista.especialidades)) {
+      this.especialidadesDelEspecialista.set(especialista.especialidades);
+    } else {
+      this.especialidadesDelEspecialista.set([]);
+    }
+
+    this.formulario.patchValue({ especialidad: '', fechaHora: '' });
+    this.turnosDisponibles.set([]);
+  }
+
+  onEspecialidadSeleccionada() {
+    const especialidad = this.formulario.get('especialidad')?.value;
+    const especialistaId = this.formulario.get('especialista')?.value;
+    
+    if (!especialidad || !especialistaId) {
+      this.turnosDisponibles.set([]);
+      this.formulario.patchValue({ fechaHora: '' });
+      return;
+    }
+
+    // Cargar disponibilidades y generar turnos disponibles
     this.loadingService.show();
     this.disponibilidadService
       .getDisponibilidadPorEspecialistaYEspecialidad(especialistaId, especialidad)
       .subscribe({
         next: (disponibilidades) => {
           this.disponibilidades.set(disponibilidades);
-          // Generar fechas disponibles combinando todas las disponibilidades
-          this.generarFechasDisponibles(disponibilidades);
-          this.formulario.patchValue({ fecha: '', hora: '' });
+          this.generarTurnosDisponibles(disponibilidades, especialistaId);
+          this.formulario.patchValue({ fechaHora: '' });
           this.loadingService.hide();
         },
         error: (err) => {
           console.error('Error al cargar disponibilidades:', err);
           this.disponibilidades.set([]);
-          this.fechasDisponibles.set([]);
+          this.turnosDisponibles.set([]);
           this.loadingService.hide();
         }
       });
   }
 
-  onFechaSeleccionada() {
-    const fechaStr = this.formulario.get('fecha')?.value;
-    if (!fechaStr) {
-      this.fechaSeleccionada.set(null);
-      this.horariosDisponibles.set([]);
-      this.formulario.patchValue({ hora: '' });
+  generarTurnosDisponibles(disponibilidades: DisponibilidadEspecialista[], especialistaId: string) {
+    if (!disponibilidades || disponibilidades.length === 0) {
+      this.turnosDisponibles.set([]);
       return;
     }
 
-    // Crear fecha de forma explícita para evitar problemas de zona horaria
-    // fechaStr está en formato "YYYY-MM-DD"
-    const [year, month, day] = fechaStr.split('-').map(Number);
-    const fecha = new Date(year, month - 1, day, 0, 0, 0, 0); // Medianoche en hora local
-    this.fechaSeleccionada.set(fecha);
-
-    // Buscar la disponibilidad que corresponde a esta fecha
-    const diaSemana = this.obtenerDiaSemana(fecha);
-    const disponibilidad = this.disponibilidades().find(disp => 
-      disp.dias && disp.dias.includes(diaSemana)
-    );
-
-    if (!disponibilidad) {
-      this.horariosDisponibles.set([]);
-      return;
-    }
-
-    const especialistaId = this.formulario.get('especialista')?.value;
-    
-    // Cargar turnos ocupados para esa fecha
-    // Si falla la carga, asumimos que no hay turnos ocupados y mostramos todos los horarios disponibles
-    this.loadingService.show();
+    // Cargar turnos ocupados del especialista
     this.turnoService.getTurnosPorEspecialista(especialistaId).subscribe({
       next: (turnos) => {
-        const turnosOcupados = turnos
-          .filter(t => {
-            // Comparar fechas de forma segura, solo comparando año, mes y día
-            const fechaTurno = new Date(t.fecha);
-            const fechaTurnoStr = fechaTurno.getFullYear() + '-' + 
-              String(fechaTurno.getMonth() + 1).padStart(2, '0') + '-' + 
-              String(fechaTurno.getDate()).padStart(2, '0');
-            const fechaSeleccionadaStr = year + '-' + 
-              String(month).padStart(2, '0') + '-' + 
-              String(day).padStart(2, '0');
-            
-            return (
-              fechaTurnoStr === fechaSeleccionadaStr &&
-              (t.estado === 'aceptado' || t.estado === 'pendiente')
+        const turnosDisponibles: TurnoDisponible[] = [];
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        // Generar turnos para los próximos 15 días
+        for (let i = 0; i < 15; i++) {
+          const fecha = new Date(hoy);
+          fecha.setDate(fecha.getDate() + i);
+          const diaSemana = this.obtenerDiaSemana(fecha);
+
+          // Buscar disponibilidades para este día
+          const disponibilidadesDelDia = disponibilidades.filter(disp => 
+            disp.dias && disp.dias.includes(diaSemana)
+          );
+
+          for (const disponibilidad of disponibilidadesDelDia) {
+            // Obtener turnos ocupados para esta fecha
+            const turnosOcupados = turnos
+              .filter(t => {
+                const fechaTurno = new Date(t.fecha);
+                const fechaTurnoStr = fechaTurno.getFullYear() + '-' + 
+                  String(fechaTurno.getMonth() + 1).padStart(2, '0') + '-' + 
+                  String(fechaTurno.getDate()).padStart(2, '0');
+                const fechaStr = fecha.getFullYear() + '-' + 
+                  String(fecha.getMonth() + 1).padStart(2, '0') + '-' + 
+                  String(fecha.getDate()).padStart(2, '0');
+                
+                return (
+                  fechaTurnoStr === fechaStr &&
+                  (t.estado === 'aceptado' || t.estado === 'pendiente')
+                );
+              })
+              .map(t => ({ hora: t.hora }));
+
+            // Generar horarios disponibles para esta fecha y disponibilidad
+            const horarios = this.disponibilidadService.generarHorariosDisponibles(
+              disponibilidad,
+              fecha,
+              turnosOcupados
             );
-          })
-          .map(t => ({ hora: t.hora }));
 
-        const horarios = this.disponibilidadService.generarHorariosDisponibles(
-          disponibilidad,
-          fecha,
-          turnosOcupados
-        );
+            // Crear turnos disponibles combinando fecha y hora
+            for (const hora of horarios) {
+              const [horaNum, minutos] = hora.split(':').map(Number);
+              const fechaCompleta = new Date(fecha);
+              fechaCompleta.setHours(horaNum, minutos, 0, 0);
 
-        this.horariosDisponibles.set(horarios);
-        this.formulario.patchValue({ hora: '' });
-        this.loadingService.hide();
+              turnosDisponibles.push({
+                fecha: fechaCompleta,
+                hora: hora,
+                fechaHoraStr: this.formatearFechaHora(fechaCompleta)
+              });
+            }
+          }
+        }
+
+        // Ordenar por fecha y hora ascendente
+        turnosDisponibles.sort((a, b) => {
+          const fechaA = a.fecha.getTime();
+          const fechaB = b.fecha.getTime();
+          return fechaA - fechaB;
+        });
+
+        this.turnosDisponibles.set(turnosDisponibles);
       },
       error: (err) => {
         console.error('Error al cargar turnos:', err);
-        // Si falla la carga, mostramos los horarios disponibles sin filtrar turnos ocupados
-        // Esto permite que el usuario pueda ver los horarios aunque haya un error con Firebase
-        const horarios = this.disponibilidadService.generarHorariosDisponibles(
-          disponibilidad,
-          fecha,
-          [] // Sin turnos ocupados
-        );
-        this.horariosDisponibles.set(horarios);
-        this.loadingService.hide();
+        // Generar turnos sin filtrar turnos ocupados en caso de error
+        this.generarTurnosDisponiblesSinFiltro(disponibilidades);
       }
     });
   }
 
-  generarFechasDisponibles(disponibilidades: DisponibilidadEspecialista[]) {
-    if (!disponibilidades || disponibilidades.length === 0) {
-      this.fechasDisponibles.set([]);
-      return;
-    }
-
-    const fechas: Date[] = [];
-    const fechasUnicas = new Set<string>(); // Para evitar duplicados
+  private generarTurnosDisponiblesSinFiltro(disponibilidades: DisponibilidadEspecialista[]) {
+    const turnosDisponibles: TurnoDisponible[] = [];
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    // Generar fechas para los próximos 15 días (máximo)
     for (let i = 0; i < 15; i++) {
       const fecha = new Date(hoy);
       fecha.setDate(fecha.getDate() + i);
-      
-      const fechaStr = fecha.toDateString();
-
-      // Verificar si el día está en alguna de las disponibilidades
       const diaSemana = this.obtenerDiaSemana(fecha);
-      const tieneDisponibilidad = disponibilidades.some(disp => 
+
+      const disponibilidadesDelDia = disponibilidades.filter(disp => 
         disp.dias && disp.dias.includes(diaSemana)
       );
 
-      if (tieneDisponibilidad && !fechasUnicas.has(fechaStr)) {
-        fechas.push(fecha);
-        fechasUnicas.add(fechaStr);
+      for (const disponibilidad of disponibilidadesDelDia) {
+        const horarios = this.disponibilidadService.generarHorariosDisponibles(
+          disponibilidad,
+          fecha,
+          []
+        );
+
+        for (const hora of horarios) {
+          const [horaNum, minutos] = hora.split(':').map(Number);
+          const fechaCompleta = new Date(fecha);
+          fechaCompleta.setHours(horaNum, minutos, 0, 0);
+
+          turnosDisponibles.push({
+            fecha: fechaCompleta,
+            hora: hora,
+            fechaHoraStr: this.formatearFechaHora(fechaCompleta)
+          });
+        }
       }
     }
 
-    this.fechasDisponibles.set(fechas);
+    turnosDisponibles.sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
+    this.turnosDisponibles.set(turnosDisponibles);
+  }
+
+  formatearFechaHora(fecha: Date): string {
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    const hora = fecha.getHours();
+    const minutos = String(fecha.getMinutes()).padStart(2, '0');
+    
+    // Formato: "2021-09-09 1:15 PM"
+    const hora12 = hora === 0 ? 12 : hora > 12 ? hora - 12 : hora;
+    const amPm = hora < 12 ? 'AM' : 'PM';
+    
+    return `${year}-${month}-${day} ${hora12}:${minutos} ${amPm}`;
   }
 
   private obtenerDiaSemana(fecha: Date): 'lunes' | 'martes' | 'miércoles' | 'jueves' | 'viernes' | 'sábado' {
@@ -265,17 +269,6 @@ export class SolicitarTurnoComponent implements OnInit {
     return dias[indice === 0 ? 6 : indice - 1];
   }
 
-  formatearFechaParaInput(fecha: Date): string {
-    const year = fecha.getFullYear();
-    const month = String(fecha.getMonth() + 1).padStart(2, '0');
-    const day = String(fecha.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  seleccionarFecha(fecha: Date) {
-    this.formulario.patchValue({ fecha: this.formatearFechaParaInput(fecha), hora: '' });
-    this.onFechaSeleccionada();
-  }
 
   onCaptchaValidado(validado: boolean) {
     this.captchaValidado.set(validado);
@@ -306,13 +299,19 @@ export class SolicitarTurnoComponent implements OnInit {
       return;
     }
 
-    // Crear fecha de forma explícita para evitar problemas de zona horaria
-    // valores.fecha está en formato "YYYY-MM-DD"
-    const [year, month, day] = valores.fecha.split('-').map(Number);
-    const [hora, minutos] = valores.hora.split(':').map(Number);
+    // valores.fechaHora está en formato "YYYY-MM-DD HH:MM AM/PM"
+    // Parsear fecha y hora desde el formato combinado
+    const turnoSeleccionado = this.turnosDisponibles().find(t => t.fechaHoraStr === valores.fechaHora);
     
-    // Crear fecha en hora local (no UTC) para evitar desplazamientos
-    const fechaCompleta = new Date(year, month - 1, day, hora, minutos, 0, 0);
+    if (!turnoSeleccionado) {
+      await this.notificationService.showError(
+        'Error',
+        'El turno seleccionado no es válido.'
+      );
+      return;
+    }
+
+    const fechaCompleta = turnoSeleccionado.fecha;
 
     this.loadingService.show();
     try {
@@ -329,7 +328,7 @@ export class SolicitarTurnoComponent implements OnInit {
         especialistaEmail: especialista.email,
         especialidad: valores.especialidad,
         fecha: fechaCompleta,
-        hora: valores.hora,
+        hora: turnoSeleccionado.hora,
         estado: 'pendiente',
         comentarioPaciente: valores.comentario || ''
       });

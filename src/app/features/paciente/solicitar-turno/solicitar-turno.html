@@ -12,132 +12,105 @@
 
           <div class="card-body">
             <form [formGroup]="formulario" (ngSubmit)="onSubmit()">
-              <!-- Especialidad -->
+              <!-- Paso 1: Profesionales (botones cuadrados con imagen) -->
               <div class="mb-4">
                 <label class="form-label fw-bold">
-                  Especialidad <span class="text-danger">*</span>
+                  Profesional <span class="text-danger">*</span>
                 </label>
-                <div class="d-flex flex-wrap gap-2">
-                  @for (esp of especialidades(); track esp) {
+                <div class="profesionales-grid">
+                  @for (esp of especialistas(); track esp.uid) {
                     <button
                       type="button"
-                      class="btn"
-                      [class.btn-primary]="formulario.get('especialidad')?.value === esp"
-                      [class.btn-outline-primary]="formulario.get('especialidad')?.value !== esp"
-                      (click)="formulario.patchValue({ especialidad: esp, especialista: '', fecha: '', hora: '' }); onEspecialidadSeleccionada()">
-                      {{ esp }}
+                      class="btn-profesional"
+                      [class.btn-profesional-selected]="formulario.get('especialista')?.value === esp.uid"
+                      (click)="formulario.patchValue({ especialista: esp.uid, especialidad: '', fechaHora: '' }); onEspecialistaSeleccionado()">
+                      <div class="profesional-imagen">
+                        @if (esp.imagenPerfil) {
+                          <img [src]="esp.imagenPerfil" [alt]="esp.nombre + ' ' + esp.apellido" onerror="this.src='assets/images/default-profesional.png'">
+                        } @else {
+                          <div class="profesional-placeholder">
+                            <i class="pi pi-user"></i>
+                          </div>
+                        }
+                      </div>
+                      <div class="profesional-nombre">
+                        {{ esp.nombre }} {{ esp.apellido }}
+                      </div>
                     </button>
                   }
                 </div>
-                @if (formulario.get('especialidad')?.invalid && formulario.get('especialidad')?.touched) {
+                @if (especialistas().length === 0) {
+                  <div class="alert alert-warning">
+                    No hay profesionales disponibles.
+                  </div>
+                }
+                @if (formulario.get('especialista')?.invalid && formulario.get('especialista')?.touched) {
                   <div class="text-danger small mt-1">
-                    Selecciona una especialidad
+                    Selecciona un profesional
                   </div>
                 }
               </div>
 
-              <!-- Especialista -->
-              @if (formulario.get('especialidad')?.value) {
+              <!-- Paso 2: Especialidades (botones rectangulares con imagen) -->
+              @if (formulario.get('especialista')?.value) {
                 <div class="mb-4">
                   <label class="form-label fw-bold">
-                    Especialista <span class="text-danger">*</span>
+                    Especialidad <span class="text-danger">*</span>
                   </label>
-                  <div class="row g-3">
-                    @for (esp of especialistas(); track esp.uid) {
-                      <div class="col-12 col-md-6">
+                  <div class="especialidades-grid">
+                    @for (esp of especialidadesDelEspecialista(); track esp) {
+                      <div class="especialidad-item">
+                        <div class="especialidad-nombre">{{ esp }}</div>
                         <button
                           type="button"
-                          class="btn w-100 text-start p-3 h-100"
-                          [class.btn-primary]="formulario.get('especialista')?.value === esp.uid"
-                          [class.btn-outline-primary]="formulario.get('especialista')?.value !== esp.uid"
-                          (click)="formulario.patchValue({ especialista: esp.uid, fecha: '', hora: '' }); onEspecialistaSeleccionado()">
-                          <div class="d-flex align-items-center">
-                            @if (esp.imagenPerfil) {
-                              <img [src]="esp.imagenPerfil" alt="{{ esp.nombre }}" class="avatar me-3">
-                            } @else {
-                              <div class="avatar-placeholder me-3">
-                                <i class="pi pi-user"></i>
-                              </div>
-                            }
-                            <div>
-                              <div class="fw-bold">{{ esp.nombre }} {{ esp.apellido }}</div>
-                              <small class="text-muted">{{ esp.email }}</small>
-                            </div>
+                          class="btn-especialidad"
+                          [class.btn-especialidad-selected]="formulario.get('especialidad')?.value === esp"
+                          (click)="formulario.patchValue({ especialidad: esp, fechaHora: '' }); onEspecialidadSeleccionada()">
+                          <div class="especialidad-imagen">
+                            <img [src]="esp | especialidadImagen" [alt]="esp" onerror="this.src='assets/images/especialidades/default.png'">
                           </div>
                         </button>
                       </div>
                     }
                   </div>
-                  @if (especialistas().length === 0) {
+                  @if (especialidadesDelEspecialista().length === 0) {
                     <div class="alert alert-warning">
-                      No hay especialistas disponibles para esta especialidad.
+                      Este profesional no tiene especialidades configuradas.
                     </div>
                   }
-                  @if (formulario.get('especialista')?.invalid && formulario.get('especialista')?.touched) {
+                  @if (formulario.get('especialidad')?.invalid && formulario.get('especialidad')?.touched) {
                     <div class="text-danger small mt-1">
-                      Selecciona un especialista
+                      Selecciona una especialidad
                     </div>
                   }
                 </div>
               }
 
-              <!-- Fecha -->
-              @if (formulario.get('especialista')?.value) {
+              <!-- Paso 3: Turnos disponibles (botones cuadrados con fecha y hora) -->
+              @if (formulario.get('especialidad')?.value) {
                 <div class="mb-4">
                   <label class="form-label fw-bold">
-                    Fecha <span class="text-danger">*</span>
+                    Día y Horario <span class="text-danger">*</span>
                   </label>
-                  <div class="d-flex flex-wrap gap-2">
-                    @for (fecha of fechasDisponibles(); track fecha.getTime()) {
+                  <div class="turnos-grid">
+                    @for (turno of turnosDisponibles(); track turno.fechaHoraStr) {
                       <button
                         type="button"
-                        class="btn"
-                        [class.btn-primary]="formulario.get('fecha')?.value === formatearFechaParaInput(fecha)"
-                        [class.btn-outline-primary]="formulario.get('fecha')?.value !== formatearFechaParaInput(fecha)"
-                        (click)="seleccionarFecha(fecha)">
-                        {{ fecha | date:'dd/MM/yyyy' }}
+                        class="btn-turno"
+                        [class.btn-turno-selected]="formulario.get('fechaHora')?.value === turno.fechaHoraStr"
+                        (click)="formulario.patchValue({ fechaHora: turno.fechaHoraStr })">
+                        {{ turno.fechaHoraStr }}
                       </button>
                     }
                   </div>
-                  @if (fechasDisponibles().length === 0) {
+                  @if (turnosDisponibles().length === 0) {
                     <div class="alert alert-warning">
-                      No hay fechas disponibles.
+                      No hay turnos disponibles para esta especialidad.
                     </div>
                   }
-                  @if (formulario.get('fecha')?.invalid && formulario.get('fecha')?.touched) {
+                  @if (formulario.get('fechaHora')?.invalid && formulario.get('fechaHora')?.touched) {
                     <div class="text-danger small mt-1">
-                      Selecciona una fecha
-                    </div>
-                  }
-                </div>
-              }
-
-              <!-- Hora -->
-              @if (formulario.get('fecha')?.value) {
-                <div class="mb-4">
-                  <label class="form-label fw-bold">
-                    Hora <span class="text-danger">*</span>
-                  </label>
-                  <div class="d-flex flex-wrap gap-2">
-                    @for (hora of horariosDisponibles(); track hora) {
-                      <button
-                        type="button"
-                        class="btn"
-                        [class.btn-primary]="formulario.get('hora')?.value === hora"
-                        [class.btn-outline-primary]="formulario.get('hora')?.value !== hora"
-                        (click)="formulario.patchValue({ hora: hora })">
-                        {{ hora }}
-                      </button>
-                    }
-                  </div>
-                  @if (horariosDisponibles().length === 0) {
-                    <div class="alert alert-warning">
-                      No hay horarios disponibles para esta fecha.
-                    </div>
-                  }
-                  @if (formulario.get('hora')?.invalid && formulario.get('hora')?.touched) {
-                    <div class="text-danger small mt-1">
-                      Selecciona una hora
+                      Selecciona un día y horario
                     </div>
                   }
                 </div>

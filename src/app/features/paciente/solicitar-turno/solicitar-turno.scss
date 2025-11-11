@@ -28,25 +28,182 @@
     }
   }
 
-  .avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    object-fit: cover;
+  // Grid de profesionales (botones cuadrados)
+  .profesionales-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+
+    .btn-profesional {
+      background: $card-background;
+      border: 2px solid $border-color;
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      aspect-ratio: 1;
+      width: 100%;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 16px rgba(0, 173, 181, 0.3);
+        border-color: $primary-color;
+      }
+
+      &.btn-profesional-selected {
+        background: rgba(0, 173, 181, 0.2);
+        border-color: $primary-color;
+        box-shadow: 0 4px 12px rgba(0, 173, 181, 0.4);
+      }
+
+      .profesional-imagen {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: $background-dark;
+        border: 3px solid $primary-color;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .profesional-placeholder {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: $text-muted;
+          font-size: 3rem;
+        }
+      }
+
+      .profesional-nombre {
+        color: $text-light;
+        font-weight: 600;
+        text-align: center;
+        font-size: 0.9rem;
+        line-height: 1.2;
+      }
+    }
   }
 
-  .avatar-placeholder {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: $background-dark;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: $text-muted;
+  // Grid de especialidades (botones rectangulares)
+  .especialidades-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1rem;
 
-    i {
-      font-size: 1.5rem;
+    .especialidad-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .especialidad-nombre {
+        color: $text-light;
+        font-weight: 600;
+        font-size: 1rem;
+        text-align: center;
+        margin-bottom: 0.25rem;
+      }
+
+      .btn-especialidad {
+        background: $card-background;
+        border: 2px solid $border-color;
+        border-radius: 12px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        aspect-ratio: 2 / 1; // Rectangular
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 6px 16px rgba(0, 173, 181, 0.3);
+          border-color: $primary-color;
+        }
+
+        &.btn-especialidad-selected {
+          background: rgba(0, 173, 181, 0.2);
+          border-color: $primary-color;
+          box-shadow: 0 4px 12px rgba(0, 173, 181, 0.4);
+        }
+
+        .especialidad-imagen {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          overflow: hidden;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+          }
+        }
+
+        &:hover .especialidad-imagen img {
+          transform: scale(1.1);
+        }
+      }
+    }
+  }
+
+  // Grid de turnos disponibles (botones cuadrados)
+  .turnos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    .btn-turno {
+      background: $card-background;
+      border: 2px solid $border-color;
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $text-light;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-align: center;
+      line-height: 1.3;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 16px rgba(0, 173, 181, 0.3);
+        border-color: $primary-color;
+      }
+
+      &.btn-turno-selected {
+        background: rgba(0, 173, 181, 0.2);
+        border-color: $primary-color;
+        box-shadow: 0 4px 12px rgba(0, 173, 181, 0.4);
+        color: $primary-light;
+      }
     }
   }
 
@@ -99,6 +256,29 @@
     background: rgba(255, 193, 7, 0.1);
     border-color: rgba(255, 193, 7, 0.3);
     color: #ffc107;
+  }
+
+  // Responsive
+  @media (max-width: 768px) {
+    .profesionales-grid {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 1rem;
+    }
+
+    .especialidades-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .turnos-grid {
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .btn-profesional .profesional-imagen {
+      width: 80px;
+      height: 80px;
+    }
   }
 }
 

@@ -1,59 +1,53 @@
-# ClinicaOnline
+# Clínica Online
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.1.
+Aplicación web desarrollada en Angular 20 para gestionar la atención de una clínica médica. Permite a pacientes, especialistas y administradores interactuar con turnos, historias clínicas y estadísticas en un entorno moderno, responsive y seguro, respaldado por Firebase (Auth, Firestore y Storage).
 
-## Development server
+## Acceso y Autenticación
 
-To start a local development server, run:
+- **Landing page:** página inicial con presentación general y accesos directos a registro e inicio de sesión.
+- **Registro de usuarios:** flujo diferenciado para pacientes y especialistas, con validaciones, carga de documentación y selección de especialidades.
+- **Login:** autenticación con email y contraseña. Existen accesos rápidos configurados para pruebas (perfiles paciente, especialista y administrador).
+- **Recuperación de contraseña:** proceso guiado para restablecer credenciales a través de correo electrónico.
 
-```bash
-ng serve
-```
+## Navegación General
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+La aplicación utiliza enrutamiento con lazy loading, guards y layout independiente por rol. Tras iniciar sesión, cada usuario accede a un dashboard personalizado:
 
-## Code scaffolding
+- Barra lateral con enlaces a las secciones disponibles según el rol.
+- Encabezado con acceso al perfil, cambios de estado y cierre de sesión.
+- Contenido central con las vistas principales del módulo activo.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Módulos y Secciones
 
-```bash
-ng generate component component-name
-```
+### Pacientes
+- **Solicitar turnos:** selección guiada de profesional, especialidad, fecha y horario disponibles.
+- **Mis turnos:** listado filtrable con estados (pendiente, aceptado, realizado, cancelado) y opciones para calificar, subir reseñas o cancelar.
+- **Historia clínica:** visualización de atenciones pasadas con detalles cargados por los especialistas.
+- **Mi perfil:** actualización de datos personales y descarga en PDF de la historia clínica por especialidad.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Especialistas
+- **Agenda de turnos:** gestión de turnos asignados con acciones de aceptar, rechazar, completar y cargar la historia clínica.
+- **Pacientes atendidos:** listado de pacientes con los que tuvo al menos una consulta, incluyendo los últimos turnos y acceso rápido a sus historias clínicas.
+- **Perfil profesional:** configuración de disponibilidad y especialidades, actualización de datos y documentación.
 
-```bash
-ng generate --help
-```
+### Administradores
+- **Gestión de usuarios:** alta y modificación de usuarios, habilitación de especialistas y exportación de información a Excel.
+- **Solicitar turnos:** posibilidad de crear turnos en nombre de un paciente, seleccionando profesional, especialidad y horarios disponibles.
+- **Logs y auditoría:** tablero con los registros de actividad relevantes para el control interno.
+- **Estadísticas:** panel de métricas y gráficos sobre turnos, especialidades más demandadas y participación de usuarios.
 
-## Building
+## Arquitectura y Tecnologías
 
-To build the project run:
+- **Frontend:** Angular standalone components, señales y RxJS para la gestión reactiva de datos y estados.
+- **Estilos:** SCSS modular con Bootstrap 5, PrimeNG y tema oscuro (#1a1a2e, #00adb5, #00d4ff).
+- **Backend-as-a-Service:** Firebase Authentication, Cloud Firestore y Storage para persistencia y archivos.
+- **Utilidades:** formularios reactivos, guards de roles, interceptores HTTP, pipes y directivas personalizadas.
 
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+## Ejecución Local
 
 ```bash
-ng e2e
+npm install
+npm run start
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+La aplicación queda disponible en `http://localhost:4200/`. Para builds de producción utilizar `npm run build`.
