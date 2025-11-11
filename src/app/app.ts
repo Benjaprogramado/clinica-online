@@ -20,11 +20,11 @@ const routeAnimations = trigger('routeAnimations', [
     ], { optional: true }),
     group([
       query(':leave', [
-        animate('700ms ease-in', style({ opacity: 0 }))
+        animate('300ms ease-in', style({ opacity: 0 }))
       ], { optional: true }),
       query(':enter', [
         style({ opacity: 0 }),
-        animate('900ms ease-out', style({ opacity: 1 }))
+        animate('400ms ease-out', style({ opacity: 1 }))
       ], { optional: true })
     ])
   ]),
@@ -39,11 +39,11 @@ const routeAnimations = trigger('routeAnimations', [
     ], { optional: true }),
     group([
       query(':leave', [
-        animate('750ms ease-in', style({ opacity: 0, transform: 'translateY(-40px)' }))
+        animate('350ms ease-in', style({ opacity: 0, transform: 'translateY(-40px)' }))
       ], { optional: true }),
       query(':enter', [
         style({ opacity: 0, transform: 'translateY(120px)' }),
-        animate('1000ms cubic-bezier(0.22, 0.82, 0.25, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
+        animate('450ms cubic-bezier(0.22, 0.82, 0.25, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
       ], { optional: true })
     ])
   ])
