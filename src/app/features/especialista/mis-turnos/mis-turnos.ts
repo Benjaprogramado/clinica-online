@@ -220,7 +220,7 @@ export class MisTurnosEspecialistaComponent implements OnInit {
   }
 
   async cancelarTurno(turno: Turno) {
-    if (turno.estado !== 'pendiente') {
+    if (!['pendiente', 'aceptado'].includes(turno.estado)) {
       return;
     }
 
